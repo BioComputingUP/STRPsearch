@@ -1,5 +1,6 @@
 from . import search_vs_tul
 import typer
+from rich import print
 import shutil
 import mimetypes
 import tempfile
@@ -12,6 +13,7 @@ from .tmalign import Tmalign
 from . import predictor_utils as utils
 from scipy.signal import savgol_filter
 from scipy.signal import find_peaks
+import logging
 
 # Define the default hyperparameters
 distance_p = cfg.distance_p
@@ -43,13 +45,22 @@ def execute_repeatsalgorithm(
     try:
         os.mkdir(out_dir)
     except FileExistsError:
-        print("Output directory already exists")
-        raise typer.Exit()
+        print("\n[bold red]Error: Output directory already exists [/bold red]\n")
+        raise typer.Abort()
     try:
         os.mkdir(temp_dir)
     except FileExistsError:
-        print("Results directory already exists")
+        print("\n[bold red]Error: Output directory already exists [/bold red]\n")
         raise typer.Exit()
+
+    logging.basicConfig(
+        filename=os.path.join(out_dir, "debug.log"),
+        filemode="w",
+        format="%(asctime)s - %(message)s",
+        level=logging.WARNING,
+    )
+    log = logging.getLogger("REPEATSDB")
+
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 
     search_vs_tul.search_tul(
@@ -76,9 +87,9 @@ def execute_repeatsalgorithm(
             ct = str(row["t_ct"])
             target_avg_len = row["t_avg_length"]
 
-            print("Query name:", query_name)
-            print("Target name: ", target_name)
-            print("Target CT: ", ct)
+            print(f"[bold blue]Query name: {query_name}")
+            print(f"[bold blue]Target name: {target_name}")
+            print(f"[bold blue]Target CT:  {ct}\n")
 
             insert_len = 60
             if ct == "4.4":
@@ -96,11 +107,17 @@ def execute_repeatsalgorithm(
                     qstructure = cif_parser.get_structure(
                         query_name, query_path)
                 else:
-                    print("Only PDB / mmCIF format is accepted for query files")
-                    raise TypeError
+                    print(
+                        "[bold red]Only PDB / mmCIF format is accepted for query files"
+                    )
+                    raise typer.Abort()
             else:
-                print("The query file format is ambiguous")
-                raise TypeError
+                print(
+                    f"[bold red]The query file format is ambiguous for query {query_name}"
+                )
+                log.error(
+                    f"The query file format is ambiguous for query {query_name}")
+                raise typer.Abort()
 
             query_chain = list(qstructure.get_chains())[0].id
             # Designate the chain from the structure
@@ -170,10 +187,15 @@ def execute_repeatsalgorithm(
             temp_query_dir_list.append(temp_query_dir)
 
             window_size = round(target_avg_len * window_p)
+
+            # window_size needs to be less than or equal to the size of x for savgol_filter (in this case, x = y)
+            if window_size > len(y):
+                window_size = len(y)
             if window_size % 2 == 0:
                 window_size -= 1
 
             poly_order = 0
+
             y = savgol_filter(y, window_size, poly_order)
 
             x, y = utils.adjust_graph_ends(x=x, y=y, frame_step=frame_step)
@@ -240,8 +262,12 @@ def execute_repeatsalgorithm(
                 # shutil.rmtree(target_dir)
             else:
                 print(
-                    f"No repeat region was found with the spcified min_height of {height_p}"
+                    f"[bold yellow]\nNo repeat region was found with the spcified min_height of {height_p} for query {query_name}[/bold yellow]"
                 )
+                log.warning(
+                    f"No repeat region was found with the spcified min_height of {height_p} for query {query_name}"
+                )
+                typer.Exit()
         for temp_query_dir in temp_query_dir_list:
             dir_name = os.path.basename(temp_query_dir)
             out_query_dir = os.path.join(out_dir, dir_name)
@@ -250,7 +276,6 @@ def execute_repeatsalgorithm(
             filename_dict = {"q_start": [], "q_end": [], "e_value": []}
             for filename in os.listdir(temp_query_dir):
                 if filename.endswith(".pdb"):
-                    print(filename)
                     filename_motifs = filename[len(query_name):].split("_")
                     q_start = int(filename_motifs[1])
                     q_end = int(filename_motifs[2])
@@ -262,6 +287,13 @@ def execute_repeatsalgorithm(
             filename_df = pd.DataFrame(filename_dict)
             filtered_df = search_vs_tul.filter_overlap(filename_df)
 
+            if filtered_df is None:
+                print(
+                    f"[bold red]\nNo hits found after filtering overlap for {query_name}[/bold red]"
+                )
+                log.error(
+                    f"No hits found after filtering overlap for {query_name}")
+                break
             src_filepaths = []
             for filename in os.listdir(temp_query_dir):
                 for e_value in filtered_df["e_value"]:
@@ -276,4 +308,6 @@ def execute_repeatsalgorithm(
 
         shutil.rmtree(temp_dir)
     else:
-        print(f"No hit was found below the specified max_eval of {max_eval_p}")
+        print(
+            f"[bold yellow]No hit was found below the specified max_eval of {max_eval_p}"
+        )

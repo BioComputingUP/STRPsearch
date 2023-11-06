@@ -7,10 +7,15 @@ RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identifi
 
 - [ ] Fix usage
 - [ ] Fix installation with pip
-- [ ] Include -h and -v options
-- [ ] Remove need to specify if structure exists
+- [x] Include -h and -v options
+- [x] Remove need to specify if structure exists
 - [ ] Make keep tempfiles optional
+- [x] Implement functionality with supplied directory
+- [x] Implement functionality with PDB download
+- [ ] Implement functionality with AlphaFold download
 
+## New bugs found
+- Supplying .cif files returns ```The query file format is ambiguous for query XXXX.cif_U```. The added **_U** I do not know why or how it happens.
 
 ## Getting Started
 
