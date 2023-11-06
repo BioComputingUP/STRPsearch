@@ -1,3 +1,5 @@
+# Bugfix/Refactoring branch
+
 # RepeatsDB-lite 2.0
 RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identification and mapping of structured tandem repeats in proteins (STRPs).
 
