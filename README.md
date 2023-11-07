@@ -72,11 +72,12 @@ Which returns the following commands:
 
 | Command | Description |
 |---------|-------------|
-| directory | Run the pipeline on a directory containing PDB files |
-| download-model | Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model |
-| download-pdb | Run the pipeline downloading a structure and querying a specific chain |
+| `directory` | Run the pipeline on a directory containing PDB files |
+| `download-model` | Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model |
+| `download-pdb` | Run the pipeline downloading a structure and querying a specific chain |
+| `version` | Show the version and exit. | 
 
-## Directory command
+## Directory
 
 ### Arguments
 * `in_dir` (TEXT): Path to directory containing PDB files. This argument is required. Default: None.
@@ -87,6 +88,31 @@ Which returns the following commands:
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
 * `--version / --no-version`: Show tool version. Default: no-version.
+* `--help`: Show this message and exit.
+
+## Download-model
+
+### Arguments
+* `uniprot_id` (TEXT): UniProt ID of the AlphaFold structure to query. This argument is required. Default: None.
+* `af_version` (TEXT): Version of AlphaFold to download structure from. This argument is required. Default: None.
+* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
+
+### Options
+* `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: ```
+
+## Download-pdb
+
+### Arguments
+* `pdb_id` (TEXT): PDB ID to download. This argument is required. Default: None.
+* `pdb_chain` (TEXT): PDB chain to query. This argument is required. Default: None.
+* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
+
+### Options
+* `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
 * `--help`: Show this message and exit.
 
 ## Examples

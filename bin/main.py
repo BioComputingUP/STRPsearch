@@ -12,11 +12,13 @@ app = typer.Typer()
 __version__ = "0.1.0"
 
 
-def version_callback(value: bool):
-    if value:
-        print(
-            f"[bold green]RepeatsDB Lite 2, version: {__version__}[/bold green]")
-        raise typer.Exit()
+@app.command()
+def version():
+    """
+    Show the version and exit.
+    """
+    print(f"[bold green]RepeatsDB Lite 2, version: {__version__}[/bold green]")
+    raise typer.Exit()
 
 
 @app.command()
@@ -37,10 +39,6 @@ def directory(
         float, typer.Option(
             help="Minimum height of TM-score signals to be processed")
     ] = cfg.min_height,
-    version: Annotated[
-        bool,
-        typer.Option(help="Show tool version", callback=version_callback),
-    ] = False,
 ):
     """
     Run the pipeline on a directory containing PDB files.
@@ -78,10 +76,6 @@ def download_pdb(
         float, typer.Option(
             help="Minimum height of TM-score signals to be processed")
     ] = cfg.min_height,
-    version: Annotated[
-        bool,
-        typer.Option(help="Show tool version", callback=version_callback),
-    ] = False,
 ):
     """
     Run the pipeline downloading a structure and querying a specific chain.
@@ -134,10 +128,6 @@ def download_model(
         float, typer.Option(
             help="Minimum height of TM-score signals to be processed")
     ] = cfg.min_height,
-    version: Annotated[
-        bool,
-        typer.Option(help="Show tool version", callback=version_callback),
-    ] = False,
 ):
     """
     Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model.
