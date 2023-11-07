@@ -64,7 +64,9 @@ docker run repeatsdb-lite [OPTIONS]
 Note: Please be aware that the Docker container will not have access to paths located on the host system. To provide input and retrieve output, you'll need to transfer files between the container and the host manually.
 
 ## Usage:
-The tools has three Commands, each with its arguments and options. To list the available commands run:
+The tools has three Commands, each with its positional arguments and options. 
+
+To list the available commands run:
 
 ```python3 bin/main.py --help```
 
@@ -117,17 +119,17 @@ Which returns the following commands:
 
 ## Examples
 
-If you already have one or more pdb/mmcif format structures of **single polypeptide chains** stored in a directory:
+If you already have one or more pdb/mmcif format structures of **single polypeptide chains** stored in a directory, while also keeping temporary files:
 ```
-python3 ./bin/repeatsdb-lite-2.py -e 1 -i /input/directory -o /output/directory -t /temporary/directory
+python3 ./bin/main.py directory /input/directory -o /output/directory --keep-temp 
 ```
 
-If you want to download a specific structure from PDB (e.g. chain C of 4g8l PDB structure)
+If you want to download a specific structure from PDB (e.g. chain C of 4g8l PDB structure), without keeping temporary files:
 ```
-python3 ./bin/repeatsdb-lite-2.py -e 0 --pdb_id 4g8l --pdb_chain C -o /output/directory -t /temporary/directory
+python3 ./bin/main.py download-pdb 4g8l C /output/directory 
 ```
 
 If you want to download a predicted structure from AlphaFold (e.g. UniProt ID: Q05823)
 ```
-python3 ./bin/repeatsdb-lite-2.py -e 0 --uniprot_id Q05823 --af_version 4 -o /output/directory -t /temporary/directory
+python3 ./bin/main.py download-model Q05823 4 /output/directory 
 ```
