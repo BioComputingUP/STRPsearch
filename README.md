@@ -83,10 +83,10 @@ Which returns the following commands:
 * `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
 
 ### Options
-* `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
+* `--keep-temp / --no-keep-temp`: Keep temporary files. Default: no-keep-temp.
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--version` / `--no-version`: Show tool version. Default: no-version.
+* `--version / --no-version`: Show tool version. Default: no-version.
 * `--help`: Show this message and exit.
 
 ## Examples
