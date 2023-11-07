@@ -13,7 +13,7 @@ RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identifi
 - [x] Implement functionality with supplied directory
 - [x] Implement functionality with PDB download
 - [x] Implement functionality with AlphaFold download
-
+- [ ] Fix usage with Docker
 ## New bugs found
 - Supplying .cif files returns ```The query file format is ambiguous for query XXXX.cif_U```. The added **_U** I do not know why or how it happens.
 - In the logic for the savgol_filter window_size needs to be the same or lower than the length of x. Corrected that
