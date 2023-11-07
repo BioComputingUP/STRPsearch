@@ -1,4 +1,4 @@
-import src.config as cfg
+from src import config as cfg
 import os
 import typer
 from typing_extensions import Annotated
