@@ -87,7 +87,6 @@ Which returns the following commands:
 * `--keep-temp / --no-keep-temp`: Keep temporary files. Default: no-keep-temp.
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--version / --no-version`: Show tool version. Default: no-version.
 * `--help`: Show this message and exit.
 
 ## Download-model
@@ -100,7 +99,8 @@ Which returns the following commands:
 ### Options
 * `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
-* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: ```
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
+* `--help`: Show this message and exit.
 
 ## Download-pdb
 
