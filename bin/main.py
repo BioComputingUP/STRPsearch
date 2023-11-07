@@ -28,12 +28,8 @@ def directory(
         str, typer.Argument(
             help="Path to directory where output will be saved")
     ],
-    result_dir: Annotated[
-        str,
-        typer.Argument(
-            help="Path to directory where result files will be saved. Defaults to a new directory named 'results' in the output directory"
-        ),
-    ] = "results",
+    keep_temp: Annotated[bool, typer.Option(
+        help="Keep temporary files")] = False,
     max_eval: Annotated[
         float, typer.Option(help="Maximum E-value of the targets to prefilter")
     ] = cfg.max_eval,
@@ -49,19 +45,20 @@ def directory(
     """
     Run the pipeline on a directory containing PDB files.
     """
-    result_dir = os.path.join(out_dir, result_dir)
+    temp_dir = os.path.join(out_dir, "temp_dir")
 
     print(
         f"""\n[bold]Running RepeatsDB Lite 2 with the following parameters:[/bold]
 [bold blue]Input directory: {in_dir} [/bold blue]
 [bold blue]Output directory: {out_dir} [/bold blue]
-[bold blue]Result directory: {result_dir} [/bold blue]
+[bold blue]Result directory: {temp_dir} [/bold blue]
 [bold blue]Maximum E-value: {max_eval} [/bold blue]
 [bold blue]Minimum height: {min_height} [/bold blue]\n"""
     )
 
     ex.execute_repeatsalgorithm(
-        in_dir, out_dir, result_dir, max_eval, min_height)
+        in_dir, out_dir, temp_dir, max_eval, min_height, keep_temp
+    )
 
 
 @app.command()
@@ -72,12 +69,8 @@ def download_pdb(
         str, typer.Argument(
             help="Path to directory where output will be saved")
     ],
-    result_dir: Annotated[
-        str,
-        typer.Argument(
-            help="Path to directory where result files will be saved. Defaults to a new directory named 'results' in the output directory"
-        ),
-    ] = "results",
+    keep_temp: Annotated[bool, typer.Option(
+        help="Keep temporary files")] = False,
     max_eval: Annotated[
         float, typer.Option(help="Maximum E-value of the targets to prefilter")
     ] = cfg.max_eval,
@@ -94,13 +87,13 @@ def download_pdb(
     Run the pipeline downloading a structure and querying a specific chain.
     """
 
-    result_dir = os.path.join(out_dir, result_dir)
+    temp_dir = os.path.join(out_dir, "temp_dir")
 
     in_dir = os.path.join(out_dir, "download_structures")
 
-    print(f"""\n[bold]Downloading PDB structure {pdb_id}[/bold]""")
-
-    ds.download_pdb_structure(pdb_id, pdb_chain, in_dir)
+    success = ds.download_pdb_structure(pdb_id, pdb_chain, in_dir)
+    if success == 1:
+        raise typer.Abort()
 
     out_dir = os.path.join(out_dir, "out")
 
@@ -108,13 +101,68 @@ def download_pdb(
         f"""\n[bold]Running RepeatsDB Lite 2 with the following parameters:[/bold]
 [bold blue]Input directory: {in_dir} [/bold blue]
 [bold blue]Output directory: {out_dir} [/bold blue]
-[bold blue]Result directory: {result_dir} [/bold blue]
+[bold blue]Result directory: {temp_dir} [/bold blue]
 [bold blue]Maximum E-value: {max_eval} [/bold blue]
 [bold blue]Minimum height: {min_height} [/bold blue]\n"""
     )
 
     ex.execute_repeatsalgorithm(
-        in_dir, out_dir, result_dir, max_eval, min_height)
+        in_dir, out_dir, temp_dir, max_eval, min_height, keep_temp
+    )
+
+
+@app.command()
+def download_model(
+    uniprot_id: Annotated[
+        str, typer.Argument(
+            help="UniProt ID of the AlphaFold structure to query")
+    ],
+    af_version: Annotated[
+        str, typer.Argument(
+            help="Version of AlphaFold to download structure from")
+    ],
+    out_dir: Annotated[
+        str, typer.Argument(
+            help="Path to directory where output will be saved")
+    ],
+    keep_temp: Annotated[bool, typer.Option(
+        help="Keep temporary files")] = False,
+    max_eval: Annotated[
+        float, typer.Option(help="Maximum E-value of the targets to prefilter")
+    ] = cfg.max_eval,
+    min_height: Annotated[
+        float, typer.Option(
+            help="Minimum height of TM-score signals to be processed")
+    ] = cfg.min_height,
+):
+    """
+    Run the pipeline downloading a structure and querying a specific chain.
+    """
+
+    temp_dir = os.path.join(out_dir, "temp_dir")
+
+    in_dir = os.path.join(out_dir, "download_structures")
+
+    print(f"""\n[bold]Downloading AlphaFold model for {uniprot_id}[/bold]""")
+
+    success = ds.download_alphafold_structure(uniprot_id, af_version, in_dir)
+    if success != 200:
+        raise typer.Abort()
+
+    out_dir = os.path.join(out_dir, "out")
+
+    print(
+        f"""\n[bold]Running RepeatsDB Lite 2 with the following parameters:[/bold]
+[bold blue]Input directory: {in_dir} [/bold blue]
+[bold blue]Output directory: {out_dir} [/bold blue]
+[bold blue]Result directory: {temp_dir} [/bold blue]
+[bold blue]Maximum E-value: {max_eval} [/bold blue]
+[bold blue]Minimum height: {min_height} [/bold blue]\n"""
+    )
+
+    ex.execute_repeatsalgorithm(
+        in_dir, out_dir, temp_dir, max_eval, min_height, keep_temp
+    )
 
 
 if __name__ == "__main__":

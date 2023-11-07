@@ -41,25 +41,31 @@ def execute_repeatsalgorithm(
     temp_dir: str,
     max_eval_p: float,
     height_p: float,
+    keep_temp: bool,
 ):
-    try:
-        os.mkdir(out_dir)
-    except FileExistsError:
-        print("\n[bold red]Error: Output directory already exists [/bold red]\n")
-        raise typer.Abort()
-    try:
-        os.mkdir(temp_dir)
-    except FileExistsError:
-        print("\n[bold red]Error: Output directory already exists [/bold red]\n")
-        raise typer.Exit()
-
     logging.basicConfig(
-        filename=os.path.join(out_dir, "debug.log"),
+        filename=os.path.join(structure_dir, "debug.log"),
         filemode="w",
         format="%(asctime)s - %(message)s",
         level=logging.WARNING,
     )
-    log = logging.getLogger("REPEATSDB")
+
+    try:
+        os.mkdir(out_dir)
+    except FileExistsError:
+        print(
+            "\n[bold yellow]Warning: Output directory already exists [/bold yellow]\n"
+        )
+        logging.warning("Output directory already exists")
+        raise typer.Abort()
+    try:
+        os.mkdir(temp_dir)
+    except FileExistsError:
+        print(
+            "\n[bold yellow]Warning: Results directory already exists [/bold yellow]\n"
+        )
+        logging.warning("Results directory already exists")
+        raise typer.Abort()
 
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 
@@ -115,8 +121,9 @@ def execute_repeatsalgorithm(
                 print(
                     f"[bold red]The query file format is ambiguous for query {query_name}"
                 )
-                log.error(
-                    f"The query file format is ambiguous for query {query_name}")
+                logging.error(
+                    f"The query file format is ambiguous for query {query_name}"
+                )
                 raise typer.Abort()
 
             query_chain = list(qstructure.get_chains())[0].id
@@ -262,10 +269,10 @@ def execute_repeatsalgorithm(
                 # shutil.rmtree(target_dir)
             else:
                 print(
-                    f"[bold yellow]\nNo repeat region was found with the spcified min_height of {height_p} for query {query_name}[/bold yellow]"
+                    f"[bold yellow]\nNo repeat region was found with the spcified minimum height of {height_p} for query {query_name}[/bold yellow]"
                 )
-                log.warning(
-                    f"No repeat region was found with the spcified min_height of {height_p} for query {query_name}"
+                logging.warning(
+                    f"No repeat region was found with the spcified minimum height of {height_p} for query {query_name}"
                 )
                 typer.Exit()
         for temp_query_dir in temp_query_dir_list:
@@ -291,7 +298,7 @@ def execute_repeatsalgorithm(
                 print(
                     f"[bold red]\nNo hits found after filtering overlap for {query_name}[/bold red]"
                 )
-                log.error(
+                logging.error(
                     f"No hits found after filtering overlap for {query_name}")
                 break
             src_filepaths = []
@@ -304,10 +311,17 @@ def execute_repeatsalgorithm(
             for filepath in src_filepaths:
                 filename = os.path.basename(filepath)
                 dst_path = os.path.join(out_query_dir, filename)
-                shutil.copy(filepath, dst_path)
+                shutil.move(filepath, dst_path)
+            shutil.rmtree(temp_query_dir)
 
-        shutil.rmtree(temp_dir)
+        if not keep_temp:
+            shutil.rmtree(temp_dir)
+        else:
+            shutil.move(temp_dir, os.path.join(out_dir, "temp_dir"))
+
     else:
         print(
-            f"[bold yellow]No hit was found below the specified max_eval of {max_eval_p}"
+            f"[bold yellow]No hit was found below the specified maximum E-value of {max_eval_p}[/bold yellow]"
         )
+        shutil.rmtree(temp_dir)
+        shutil.rmtree(out_dir)
