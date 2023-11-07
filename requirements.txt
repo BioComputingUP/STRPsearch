@@ -1,18 +1,10 @@
-os
-sys
-mimetypes
-tempfile
-shutil
-argparse
-warnings
-subprocess
-json
 biopython
 numpy
 pandas
 matplotlib
 requests
 scipy
+typer[all]
 # Install these using conda
 # conda install -c conda-forge -c bioconda foldseek
 # conda install -c bioconda tmalign
