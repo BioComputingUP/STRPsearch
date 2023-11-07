@@ -134,9 +134,13 @@ def download_model(
         float, typer.Option(
             help="Minimum height of TM-score signals to be processed")
     ] = cfg.min_height,
+    version: Annotated[
+        bool,
+        typer.Option(help="Show tool version", callback=version_callback),
+    ] = False,
 ):
     """
-    Run the pipeline downloading a structure and querying a specific chain.
+    Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model.
     """
 
     temp_dir = os.path.join(out_dir, "temp_dir")

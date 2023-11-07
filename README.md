@@ -6,14 +6,16 @@ RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identifi
 ## Bugfix/Checklist
 
 - [x] Fix usage
-- [ ] Fix installation with pip
+- [x] Fix installation with pip
 - [x] Include -h and -v options
 - [x] Remove need to specify if structure exists
 - [x] Make keep tempfiles optional
 - [x] Implement functionality with supplied directory
 - [x] Implement functionality with PDB download
 - [x] Implement functionality with AlphaFold download
+- [x] Modified Dockerfile
 - [ ] Fix usage with Docker
+
 ## New bugs found
 - Supplying .cif files returns ```The query file format is ambiguous for query XXXX.cif_U```. The added **_U** I do not know why or how it happens.
 - In the logic for the savgol_filter window_size needs to be the same or lower than the length of x. Corrected that
@@ -36,7 +38,7 @@ conda install -c bioconda tmalign
 ```
 2. Run the project with the following command:
 ```
-python3 ./bin/repeatsdb-lite-2.py [OPTIONS]
+python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ### Method 2: Using Conda Environment
@@ -47,7 +49,7 @@ conda activate rdblite_env
 ```
 2. Run the project inside the environment with the following command:
 ```
-python3 ./bin/repeatsdb-lite-2.py [OPTIONS]
+python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ### Method 3: Using Docker
@@ -61,20 +63,41 @@ docker run repeatsdb-lite [OPTIONS]
 ```
 Note: Please be aware that the Docker container will not have access to paths located on the host system. To provide input and retrieve output, you'll need to transfer files between the container and the host manually.
 
-## List of Options:
-| Option | Type	| Description |
-| --- | --- | --- |
-| --structure_exists (-e) | str | Structure already exists at input directory (1) or not (0) |
-| --out_dir (-o) | str | Path to the output directory |
-| --temp_dir (-t) | str | Path to the temporary directory |
-| --in_dir (-i) | str (Default: None) | Path to the input directory |
-| --pdb_id | str (Default: None) | PDB structure to download |
-| --pdb_chain | str (Default: None) | PDB chain to query |
-| --uniprot_id | str (Default: None) | UniProt ID of the AlphaFold structure to query |
-| --af_version | str (Default: None) | Version of AlphaFold to download structure from |
-| --max_eval | float (Default: 0.01) | Maximum E-value of the targets to prefilter |
-| --min_height | float (Default: 0.4) | Minimum height of TM-score signals to be processed |
+## Usage:
+The tools has three Commands, each with its arguments and options. To list the available commands run:
 
+```python3 bin/main.py --help```
+
+Which returns the following commands:
+
+| Command | Description |
+|---------|-------------|
+| directory | Run the pipeline on a directory containing PDB files |
+| download-model | Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model |
+| download-pdb | Run the pipeline downloading a structure and querying a specific chain |
+
+
+╭─ Arguments ───────────────────────────────────────────────────────────────╮
+│ *    in_dir       TEXT  Path to directory containing PDB files            │
+│                         [default: None]                                   │
+│                         [required]                                        │
+│ *    out_dir      TEXT  Path to directory where output will be saved      │
+│                         [default: None]                                   │
+│                         [required]                                        │
+╰───────────────────────────────────────────────────────────────────────────╯
+╭─ Options ─────────────────────────────────────────────────────────────────╮
+│ --keep-temp     --no-keep-temp           Keep temporary files             │
+│                                          [default: no-keep-temp]          │
+│ --max-eval                        FLOAT  Maximum E-value of the targets   │
+│                                          to prefilter                     │
+│                                          [default: 0.01]                  │
+│ --min-height                      FLOAT  Minimum height of TM-score       │
+│                                          signals to be processed          │
+│                                          [default: 0.4]                   │
+│ --version       --no-version             Show tool version                │
+│                                          [default: no-version]            │
+│ --help                                   Show this message and exit.      │
+╰───────────────────────────────────────────────────────────────────────────╯
 
 ## Examples
 
