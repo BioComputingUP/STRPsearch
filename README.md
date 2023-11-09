@@ -14,7 +14,7 @@ RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identifi
 - [x] Implement functionality with PDB download
 - [x] Implement functionality with AlphaFold download
 - [x] Modified Dockerfile
-- [ ] Fix usage with Docker
+- [x] Fix usage with Docker
 
 ## New bugs found
 - Supplying .cif files returns ```The query file format is ambiguous for query XXXX.cif_U```. The added **_U** I do not know why or how it happens.
@@ -57,11 +57,13 @@ python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
 ```
 docker build -t repeatsdb-lite .
 ```
-2. Run the Docker container with the following command:
+2. To run the container, use the following command:
 ```
-docker run repeatsdb-lite [OPTIONS]
+docker run -v $(pwd):/app/ repeatsdb-lite analyze-directory input/directory/ output/directory
 ```
-Note: Please be aware that the Docker container will not have access to paths located on the host system. To provide input and retrieve output, you'll need to transfer files between the container and the host manually.
+The line `-v $(pwd):/app/` mounts the current directory (`$(pwd)`) to the working directory of the 
+container specified in the `Dockerfile` by the line `WORKDIR /app`. This way, the containerized application
+is able to access the input and write the output to the local machine.
 
 ## Usage:
 The tools has three Commands, each with its positional arguments and options. 
@@ -74,12 +76,12 @@ Which returns the following commands:
 
 | Command | Description |
 |---------|-------------|
-| `directory` | Run the pipeline on a directory containing PDB files |
+| `analyze-directory` | Run the pipeline on a directory containing PDB files |
 | `download-model` | Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model |
 | `download-pdb` | Run the pipeline downloading a structure and querying a specific chain |
 | `version` | Show the version and exit. | 
 
-## Directory
+## Analyze-directory
 
 ### Arguments
 * `in_dir` (TEXT): Path to directory containing PDB files. This argument is required. Default: None.
@@ -121,7 +123,7 @@ Which returns the following commands:
 
 If you already have one or more pdb/mmcif format structures of **single polypeptide chains** stored in a directory, while also keeping temporary files:
 ```
-python3 ./bin/main.py directory /input/directory -o /output/directory --keep-temp 
+python3 ./bin/main.py analyze-directory /input/directory -o /output/directory --keep-temp 
 ```
 
 If you want to download a specific structure from PDB (e.g. chain C of 4g8l PDB structure), without keeping temporary files:
@@ -133,3 +135,5 @@ If you want to download a predicted structure from AlphaFold (e.g. UniProt ID: Q
 ```
 python3 ./bin/main.py download-model Q05823 4 /output/directory 
 ```
+
+

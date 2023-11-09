@@ -22,7 +22,7 @@ def version():
 
 
 @app.command()
-def directory(
+def analyze_directory(
     in_dir: Annotated[
         str, typer.Argument(help="Path to directory containing PDB files")
     ],
