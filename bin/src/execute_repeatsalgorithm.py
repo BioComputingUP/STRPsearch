@@ -80,11 +80,11 @@ def execute_repeatsalgorithm(
     found_hit, target_df = search_vs_tul.find_target(
         output_file=fs_output, max_eval=max_eval_p
     )
+    print(target_df)
 
     if found_hit:
         temp_query_dir_list = []
-        for i in range(len(target_df)):
-            row = target_df.iloc[i]
+        for index, row in target_df.sort_values(by="query").iterrows():
             # Define essential variables
             query_name = row["query"]
             target_name = row["target"]
@@ -116,6 +116,8 @@ def execute_repeatsalgorithm(
                     print(
                         "[bold red]Only PDB / mmCIF format is accepted for query files"
                     )
+                    logging.error(
+                        "Only PDB / mmCIF format is accepted for query files")
                     raise typer.Abort()
             else:
                 print(
@@ -311,8 +313,8 @@ def execute_repeatsalgorithm(
             for filepath in src_filepaths:
                 filename = os.path.basename(filepath)
                 dst_path = os.path.join(out_query_dir, filename)
-                shutil.move(filepath, dst_path)
-            shutil.rmtree(temp_query_dir)
+                shutil.copy(filepath, dst_path)
+            # shutil.rmtree(temp_query_dir)
 
         if not keep_temp:
             shutil.rmtree(temp_dir)
