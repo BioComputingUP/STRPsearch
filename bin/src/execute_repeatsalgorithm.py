@@ -80,7 +80,6 @@ def execute_repeatsalgorithm(
     found_hit, target_df = search_vs_tul.find_target(
         output_file=fs_output, max_eval=max_eval_p
     )
-    print(target_df)
 
     if found_hit:
         temp_query_dir_list = []
