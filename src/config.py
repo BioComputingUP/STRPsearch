@@ -20,9 +20,9 @@ uniprot_id = None
 
 af_version = None
 
-max_eval = 0.01
+max_eval = 0.1
 
-min_height = 0.4
+min_height = 0.3
 
 distance_p = 0.6
 
@@ -30,7 +30,7 @@ frame_step = 1
 
 width_p = 0
 
-prominence_p = 0.001
+prominence_p = 0.0001
 
 threshold_p = 0
 
