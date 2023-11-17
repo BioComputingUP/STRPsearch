@@ -24,14 +24,14 @@ max_eval = 0.1
 
 min_height = 0.3
 
-distance_p = 0.6
+distance_p = 0.65
 
 frame_step = 1
 
 width_p = 0
 
-prominence_p = 0.0001
+prominence_p = 0.001
 
 threshold_p = 0
 
-window_p = 0.2
+window_p = 0.4

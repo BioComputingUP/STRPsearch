@@ -1,7 +1,9 @@
 from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
+from pymol import cmd as pcmd
 from datetime import datetime
 from Bio.PDB import Select
+import seaborn as sns
 import numpy as np
 import json
 
@@ -119,7 +121,7 @@ def calculate_ranges(peak_residue_nums, distance, max_length, flexibility):
     return ranges
 
 
-def make_json(pdb_id_chain, ct, regions_dict, out_path):
+def make_json(structure_id, chain_id, ct, regions_dict, out_path):
     """
     Creates and saves a JSON file containing the annotation of the repeat region/regions of a specific type
     """
@@ -128,8 +130,6 @@ def make_json(pdb_id_chain, ct, regions_dict, out_path):
     entries_list = []
 
     # Extract the essential data from the given arguments
-    pdb_id = pdb_id_chain[:-1]
-    pdb_chain = pdb_id_chain[-1]
     class_type = ct.split(".")[0]
     topology_type = ct.split(".")[1]
 
@@ -139,32 +139,54 @@ def make_json(pdb_id_chain, ct, regions_dict, out_path):
         for unit in v["units"]:
             start = str(unit[0])
             end = str(unit[1])
-            unit_dict = {"start": start, "end": end, "type": "unit", "pdb_id": pdb_id, "pdb_chain": pdb_chain,
-                         "repeatsdb_id": pdb_id_chain, "class": class_type, "topology": topology_type, "fold": "0",
-                         "clan": "0", "class_topology": ct, "class_topology_fold": f"{ct}.0",
-                         "class_topology_fold_clan": f"{ct}.0.0", "origin": "Predicted", "reviewed": False,
-                         "annotator": "", "region_id": region_id, "region_units_num": 0,
-                         "region_average_unit_length": 0}
+            unit_dict = {
+                "structure_id": structure_id,
+                "chain_id": chain_id,
+                "type": "unit",
+                "start": start,
+                "end": end,
+                "class": class_type,
+                "topology": topology_type,
+                "class_topology": ct,
+                "origin": "Predicted",
+                "reviewed": False,
+                "region_id": region_id
+            }
 
             entries_list.append(unit_dict)
 
         for insertion in v["insertions"]:
             start = str(insertion[0])
             end = str(insertion[1])
-            insertion_dict = {"start": start, "end": end, "type": "insertion", "pdb_id": pdb_id, "pdb_chain": pdb_chain,
-                              "repeatsdb_id": pdb_id_chain, "class": class_type, "topology": topology_type, "fold": "0",
-                              "clan": "0", "class_topology": ct, "class_topology_fold": f"{ct}.0",
-                              "class_topology_fold_clan": f"{ct}.0.0", "origin": "Predicted", "reviewed": False,
-                              "annotator": "", "region_id": region_id, "region_units_num": 0,
-                              "region_average_unit_length": 0}
+            insertion_dict = {
+                "structure_id": structure_id,
+                "chain_id": chain_id,
+                "type": "insertion",
+                "start": start,
+                "end": end,
+                "class": class_type,
+                "topology": topology_type,
+                "class_topology": ct,
+                "origin": "Predicted",
+                "reviewed": False,
+                "region_id": region_id
+            }
+
             entries_list.append(insertion_dict)
 
-        region_dict = {"start": f"{v['units'][0][0]}", "end": f"{v['units'][-1][1]}", "type": "region",
-                       "pdb_id": pdb_id, "pdb_chain": pdb_chain, "repeatsdb_id": pdb_id_chain, "class": class_type,
-                       "topology": topology_type, "fold": "0", "clan": "0", "class_topology": ct,
-                       "class_topology_fold": f"{ct}.0", "class_topology_fold_clan": f"{ct}.0.0",
-                       "origin": "Predicted", "reviewed": False, "annotator": "", "region_id": region_id,
-                       "region_units_num": 0, "region_average_unit_length": 0}
+        region_dict = {
+            "structure_id": structure_id,
+            "chain_id": chain_id,
+            "type": "region",
+            "start": f"{v['units'][0][0]}",
+            "end": f"{v['units'][-1][1]}",
+            "class": class_type,
+            "topology": topology_type,
+            "class_topology": ct,
+            "origin": "Predicted",
+            "reviewed": False,
+            "region_id": region_id
+        }
 
         entries_list.append(region_dict)
 
@@ -245,10 +267,10 @@ def adjust_graph_ends(x, y, frame_step=1):
     # Compute the new value as less than the current first value
     y_new_value = round(y_first_value * 0.99, 5)
     x_new_value = round(x_first_value - frame_step)
-    # Compute the new value as less than the current first value
+    # Compute the new value as less than the current last value
     y_new_value2 = round(y_last_value * 0.99, 5)
     x_new_value2 = round(x_last_value + frame_step)
-    # Create a new array with the new value and concatenate it with the existing array
+    # Create a new array with the new values and concatenate it with the existing array
     y = np.concatenate(([y_new_value], y))
     y = np.concatenate((y, [y_new_value2]))
     x = np.concatenate(([x_new_value], x))
@@ -261,22 +283,24 @@ def plot_tmscore_graph(x, y, regions_dict, out_path):
     Plots and saves a TM-score graph highlighted by integral components of the repeat region/regions
     """
 
+    # Set a Seaborn style
+    sns.set_style("ticks")
+    sns.despine()
     # Define the colors for alternate coloring of units
-    colors = ['blue', 'red']
-    fig, ax = plt.subplots(dpi=200)
+    colors = ["cornflowerblue", "salmon"]
 
     # Plot the line graph
-    ax.plot(x, y)
-    # Plot the dots associated with residue numbers on the graph
-    ax.scatter(x, y, marker='o', color='blue', s=2)
+    fig, ax = plt.subplots(dpi=200)
+    ax.plot(x, y, color="black", linewidth=1.2)
+
     # Loop their repeat regions in regions_dict and highlight the components on the plot
     for region_id, v in regions_dict.items():
         for i, (start, end) in enumerate(v["units"]):
             color = colors[i % len(colors)]
-            ax.axvspan(start, end, facecolor=color, alpha=0.3)
+            ax.axvspan(start, end, facecolor=color, alpha=0.85)
 
         for i, (start, end) in enumerate(v["insertions"]):
-            ax.axvspan(start, end, facecolor="yellow", alpha=0.3)
+            ax.axvspan(start, end, facecolor="khaki", alpha=0.85)
 
     # Format the plot
     ax.set_xlabel("Residue Number")
@@ -302,6 +326,7 @@ def smooth_graph(y, target_avg_len, window_p):
 
     return y
 
+
 def get_current_time():
     """
     Returns the current time in the format of HH:MM:SS
@@ -310,3 +335,31 @@ def get_current_time():
     now = datetime.now()
     formatted_time = now.strftime("%H:%M:%S")
     return formatted_time
+
+
+def create_pymol_session(region_id, structure_path, components, output_path):
+    """
+    Creates a PyMOL session that the repeat components are highlighted on the associated structure
+    """
+
+    # Load the structure
+    pcmd.load(structure_path, region_id)
+
+    # Loop the units from the components and highlight them alternatively
+    for idx, (start, end) in enumerate(components["units"]):
+        selection_name = f'unit_{idx + 1}'
+        pcmd.select(selection_name, f'resi {start}-{end}')
+        color_name = 'raspberry' if idx % 2 == 0 else 'marine'  # Alternating colors
+        pcmd.color(color_name, selection_name)
+
+    # Loop the insertions from components and highlight them in yellow
+    for idx, (start, end) in enumerate(components["insertions"]):
+        selection_name = f"insertion_{idx + 1}"
+        pcmd.select(selection_name, f'resi {start}-{end}')
+        color_name = 'paleyellow'
+        pcmd.color(color_name, selection_name)
+
+    # Save the PyMOL session
+    pcmd.save(output_path)
+    # Reinitialize the PyMOL for future runs
+    pcmd.reinitialize()

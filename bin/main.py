@@ -12,7 +12,8 @@ from rich import print as rprint
 from src import download_structure as ds
 
 # Initialize the app
-app = typer.Typer()
+# Disable pretty_exceptions
+app = typer.Typer(pretty_exceptions_enable=False)
 
 __version__ = "0.1.0"
 
