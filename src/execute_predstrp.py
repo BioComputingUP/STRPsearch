@@ -347,6 +347,8 @@ def execute_predstrp(
                            f"No potential repeat region was found with hit "
                            f"{idx + 1}/{len(target_df)}\n")
             except Exception as error:
+                rprint(f"[bold red]"
+                       f"{error}")
                 logging.error(error)
 
         rprint(f"[bold][{general_utils.time()}] "
@@ -412,6 +414,8 @@ def execute_predstrp(
                         dst_path = os.path.join(out_region_dir, dst_name)
                         shutil.copy(filepath, dst_path)
             except Exception as error:
+                rprint(f"[bold red]"
+                       f"{error}")
                 logging.error(error)
 
         rprint(f"[bold][{general_utils.time()}] "

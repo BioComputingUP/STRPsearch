@@ -172,20 +172,20 @@ def make_json(structure_id, chain_id, ct, region_id, components, out_path):
 
         entries_list.append(insertion_dict)
 
-        region_dict = {
-            "structure_id": structure_id,
-            "chain_id": chain_id,
-            "type": "region",
-            "start": f"{components['units'][0][0]}",
-            "end": f"{components['units'][-1][1]}",
-            "class": class_type,
-            "topology": topology_type,
-            "origin": "Predicted",
-            "reviewed": False,
-            "region_id": region_id
-        }
+    region_dict = {
+        "structure_id": structure_id,
+        "chain_id": chain_id,
+        "type": "region",
+        "start": f"{components['units'][0][0]}",
+        "end": f"{components['units'][-1][1]}",
+        "class": class_type,
+        "topology": topology_type,
+        "origin": "Predicted",
+        "reviewed": False,
+        "region_id": region_id
+    }
 
-        entries_list.append(region_dict)
+    entries_list.append(region_dict)
 
     # Dump the list of dicts into a JSON
     json_dict = json.dumps(entries_list)
