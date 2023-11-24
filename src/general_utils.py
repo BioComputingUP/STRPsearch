@@ -6,6 +6,7 @@ from Bio.PDB import Select
 import seaborn as sns
 import numpy as np
 import json
+import os
 
 
 def get_res_index(res_num: str, chain_residues: list):
@@ -121,7 +122,7 @@ def calculate_ranges(peak_residue_nums, distance, max_length, flexibility):
     return ranges
 
 
-def make_json(structure_id, chain_id, ct, regions_dict, out_path):
+def make_json(structure_id, chain_id, ct, region_id, components, out_path):
     """
     Creates and saves a JSON file containing the annotation of the repeat region/regions of a specific type
     """
@@ -135,54 +136,50 @@ def make_json(structure_id, chain_id, ct, regions_dict, out_path):
 
     # Loop through the regions and their annotation in the regions_dict
     # Embed the essential data with the specified format
-    for region_id, v in regions_dict.items():
-        for unit in v["units"]:
-            start = str(unit[0])
-            end = str(unit[1])
-            unit_dict = {
-                "structure_id": structure_id,
-                "chain_id": chain_id,
-                "type": "unit",
-                "start": start,
-                "end": end,
-                "class": class_type,
-                "topology": topology_type,
-                "class_topology": ct,
-                "origin": "Predicted",
-                "reviewed": False,
-                "region_id": region_id
-            }
+    for unit in components["units"]:
+        start = str(unit[0])
+        end = str(unit[1])
+        unit_dict = {
+            "structure_id": structure_id,
+            "chain_id": chain_id,
+            "type": "unit",
+            "start": start,
+            "end": end,
+            "class": class_type,
+            "topology": topology_type,
+            "origin": "Predicted",
+            "reviewed": False,
+            "region_id": region_id
+        }
 
-            entries_list.append(unit_dict)
+        entries_list.append(unit_dict)
 
-        for insertion in v["insertions"]:
-            start = str(insertion[0])
-            end = str(insertion[1])
-            insertion_dict = {
-                "structure_id": structure_id,
-                "chain_id": chain_id,
-                "type": "insertion",
-                "start": start,
-                "end": end,
-                "class": class_type,
-                "topology": topology_type,
-                "class_topology": ct,
-                "origin": "Predicted",
-                "reviewed": False,
-                "region_id": region_id
-            }
+    for insertion in components["insertions"]:
+        start = str(insertion[0])
+        end = str(insertion[1])
+        insertion_dict = {
+            "structure_id": structure_id,
+            "chain_id": chain_id,
+            "type": "insertion",
+            "start": start,
+            "end": end,
+            "class": class_type,
+            "topology": topology_type,
+            "origin": "Predicted",
+            "reviewed": False,
+            "region_id": region_id
+        }
 
-            entries_list.append(insertion_dict)
+        entries_list.append(insertion_dict)
 
         region_dict = {
             "structure_id": structure_id,
             "chain_id": chain_id,
             "type": "region",
-            "start": f"{v['units'][0][0]}",
-            "end": f"{v['units'][-1][1]}",
+            "start": f"{components['units'][0][0]}",
+            "end": f"{components['units'][-1][1]}",
             "class": class_type,
             "topology": topology_type,
-            "class_topology": ct,
             "origin": "Predicted",
             "reviewed": False,
             "region_id": region_id
@@ -278,7 +275,7 @@ def adjust_graph_ends(x, y, frame_step=1):
     return x, y
 
 
-def plot_tmscore_graph(x, y, regions_dict, out_path):
+def plot_tmscore_graph(x, y, region_components, out_path):
     """
     Plots and saves a TM-score graph highlighted by integral components of the repeat region/regions
     """
@@ -287,20 +284,19 @@ def plot_tmscore_graph(x, y, regions_dict, out_path):
     sns.set_style("ticks")
     sns.despine()
     # Define the colors for alternate coloring of units
-    colors = ["cornflowerblue", "salmon"]
+    colors = ["salmon", "cornflowerblue"]
 
     # Plot the line graph
     fig, ax = plt.subplots(dpi=200)
     ax.plot(x, y, color="black", linewidth=1.2)
 
     # Loop their repeat regions in regions_dict and highlight the components on the plot
-    for region_id, v in regions_dict.items():
-        for i, (start, end) in enumerate(v["units"]):
-            color = colors[i % len(colors)]
-            ax.axvspan(start, end, facecolor=color, alpha=0.85)
+    for i, (start, end) in enumerate(region_components["units"]):
+        color = colors[i % len(colors)]
+        ax.axvspan(start, end, facecolor=color, alpha=0.85)
 
-        for i, (start, end) in enumerate(v["insertions"]):
-            ax.axvspan(start, end, facecolor="khaki", alpha=0.85)
+    for i, (start, end) in enumerate(region_components["insertions"]):
+        ax.axvspan(start, end, facecolor="khaki", alpha=0.85)
 
     # Format the plot
     ax.set_xlabel("Residue Number")
@@ -327,7 +323,7 @@ def smooth_graph(y, target_avg_len, window_p):
     return y
 
 
-def get_current_time():
+def time():
     """
     Returns the current time in the format of HH:MM:SS
     """
@@ -363,3 +359,37 @@ def create_pymol_session(region_id, structure_path, components, output_path):
     pcmd.save(output_path)
     # Reinitialize the PyMOL for future runs
     pcmd.reinitialize()
+
+
+def check_files(in_dir):
+    """
+    Checks filenames with pdb/cif extension in a directory,
+    returns two lists:
+    1. All the filepaths with pdb/cif extension
+    2. The ones with spacing in their filenames
+    """
+
+    # Create the two lists
+    pdb_cif_fps = []
+    have_space_fps = []
+    # Loop through the filenames of the directory
+    for filename in os.listdir(in_dir):
+        # Check if the filename is PDB or mmCIF
+        if filename.endswith(".pdb") or filename.endswith(".cif"):
+            # Define the filepath
+            file_path = os.path.join(in_dir, filename)
+            # Add to the general list
+            pdb_cif_fps.append(file_path)
+            # If space in the filename, add to the spacing list
+            if " " in filename:
+                have_space_fps.append(file_path)
+    return pdb_cif_fps, have_space_fps
+
+
+def get_repeat_classi(ontology_df, code):
+    """
+    Retrieve the classification name of the repeat with its Class. Topology code
+    """
+
+    repeat_classi = ontology_df[ontology_df["Code"] == code]["Name"].values[0]
+    return repeat_classi

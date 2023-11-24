@@ -10,7 +10,7 @@ in_dir = None
 
 out_dir = None
 
-temp_dir = None
+temp_dir = "/tmp"
 
 pdb_id = None
 
@@ -20,13 +20,13 @@ uniprot_id = None
 
 af_version = None
 
-max_eval = 0.1
+max_eval_p = 0.1
 
-min_height = 0.3
+min_height_p = 0.3
 
 distance_p = 0.65
 
-frame_step = 1
+frame_step_p = 1
 
 width_p = 0
 
@@ -35,3 +35,5 @@ prominence_p = 0.001
 threshold_p = 0
 
 window_p = 0.4
+
+keep_temp = False
