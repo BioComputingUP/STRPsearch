@@ -15,6 +15,7 @@ Note: Inside the requirements.txt file, you'll find a commented section that inc
 ```
 conda install -c conda-forge -c bioconda foldseek
 conda install -c bioconda tmalign
+conda install -c conda-forge pymol-open-source
 ```
 2. Run the project with the following command:
 ```
@@ -24,8 +25,8 @@ python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
 ### Method 2: Using Conda Environment
 1. Import and activate the Conda environment from the `rdblite_env.yml` file:
 ```
-conda env create -f rdblite_env.yml
-conda activate rdblite_env
+conda env create -f environment.yml
+conda activate predstrp_env
 ```
 2. Run the project inside the environment with the following command:
 ```
@@ -56,62 +57,66 @@ Which returns the following commands:
 
 | Command | Description |
 |---------|-------------|
-| `analyze-directory` | Run the pipeline on a directory containing PDB files |
-| `download-model` | Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model |
-| `download-pdb` | Run the pipeline downloading a structure and querying a specific chain |
-| `version` | Show the version and exit. | 
+| `query-file` | Query an existing PDB/CIF formatted structure file by providing the file path |
+| `download-pdb` | Download and query a structure from PDB by providing the PDB ID and the specific Chain of interest |
+| `download-model` |  Download and query an AlphaFold model by providing the UniProt ID and the AlphaFold version of interest |
+| `version` | Show the version and exit | 
 
-## Analyze-directory
-
-### Arguments
-* `in_dir` (TEXT): Path to directory containing PDB files. This argument is required. Default: None.
-* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
-
-### Options
-* `--keep-temp / --no-keep-temp`: Keep temporary files. Default: no-keep-temp.
-* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
-* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--help`: Show this message and exit.
-
-## Download-model
+## query-file
 
 ### Arguments
-* `uniprot_id` (TEXT): UniProt ID of the AlphaFold structure to query. This argument is required. Default: None.
-* `af_version` (TEXT): Version of AlphaFold to download structure from. This argument is required. Default: None.
-* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
+* `input_file` (TEXT):  Path to the input structure file to query (PDB/mmCIF). This argument is required. Default: None
+* `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
 
 ### Options
-* `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
-* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
-* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--help`: Show this message and exit.
+* `--chain /` (TEXT): Specific chain to query from the structures. Default: all
+* `--temp-dir /` (TEXT): Path to the temporary directory. Default: /tmp
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
+* `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--help`: Show this message and exit
 
 ## Download-pdb
 
 ### Arguments
-* `pdb_id` (TEXT): PDB ID to download. This argument is required. Default: None.
-* `pdb_chain` (TEXT): PDB chain to query. This argument is required. Default: None.
-* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
+* `pdb_id` (TEXT): PDB ID of the experimental structure to download and query. This argument is required. Default: None
+* `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
 
 ### Options
-* `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
-* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
-* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--help`: Show this message and exit.
+* `--chain /` (TEXT): Specific chain to query from the structures. Default: all
+* `--temp-dir /` (TEXT): Path to the temporary directory. Default: /tmp
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
+* `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--help`: Show this message and exit
+
+## download-model
+
+### Arguments
+* `uniprot_id` (TEXT): UniProt ID of the AlphaFold-predicted model to download and query. This argument is required. Default: None
+* `af_version` (TEXT): Version of AlphaFold to download predicted models from. This argument is required. Default: None
+* `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
+
+### Options
+* `--temp-dir /` (TEXT): Path to the temporary directory. Default: /tmp
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
+* `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--help`: Show this message and exit
 
 ## Examples
 
-If you already have one or more pdb/mmcif format structures of **single polypeptide chains** stored in a directory, while also keeping temporary files:
+If you already have a PDB/CIF formatted structure file stored in a directory and you want to query all the chains in the structure, keeping temporary directory and files:
 ```
-python3 ./bin/main.py analyze-directory /input/directory -o /output/directory --keep-temp 
-```
-
-If you want to download a specific structure from PDB (e.g. chain C of 4g8l PDB structure), without keeping temporary files:
-```
-python3 ./bin/main.py download-pdb 4g8l C /output/directory 
+python3 ./bin/main.py analyze-directory /input/file[.pdb/.cif] /output/directory --temp-dir /tmp --keep-temp
 ```
 
-If you want to download a predicted structure from AlphaFold (e.g. UniProt ID: Q05823)
+If you want to automatically download and query a specific experimental structure from PDB (e.g. chain C of 4g8l PDB structure), without keeping temporary directory and files:
+```
+python3 ./bin/main.py download-pdb 4g8l /output/directory --chain C
+```
+
+If you want to automatically download and query a predicted-model from AlphaFold version 4 (e.g. UniProt ID: Q05823)
 ```
 python3 ./bin/main.py download-model Q05823 4 /output/directory 
 ```
