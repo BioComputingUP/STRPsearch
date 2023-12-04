@@ -69,8 +69,8 @@ Which returns the following commands:
 * `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
 
 ### Options
-* `--chain /` (TEXT): Specific chain to query from the structures. Default: all
-* `--temp-dir /` (TEXT): Path to the temporary directory. Default: /tmp
+* `--chain` (TEXT): Specific chain to query from the structures. Default: all
+* `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
 * `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
@@ -83,8 +83,8 @@ Which returns the following commands:
 * `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
 
 ### Options
-* `--chain /` (TEXT): Specific chain to query from the structures. Default: all
-* `--temp-dir /` (TEXT): Path to the temporary directory. Default: /tmp
+* `--chain` (TEXT): Specific chain to query from the structures. Default: all
+* `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
 * `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
@@ -98,7 +98,7 @@ Which returns the following commands:
 * `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
 
 ### Options
-* `--temp-dir /` (TEXT): Path to the temporary directory. Default: /tmp
+* `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
 * `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
