@@ -23,7 +23,7 @@ python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ### Method 2: Using Conda Environment
-1. Import and activate the Conda environment from the `rdblite_env.yml` file:
+1. Import and activate the Conda environment from the `environment.yml` file:
 ```
 conda env create -f environment.yml
 conda activate predstrp_env
