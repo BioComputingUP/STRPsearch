@@ -1,25 +1,5 @@
-# Bugfix/Refactoring branch
-
 # RepeatsDB-lite 2.0
 RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identification and mapping of structured tandem repeats in proteins (STRPs).
-
-## Bugfix/Checklist
-
-- [x] Fix usage
-- [x] Fix installation with pip
-- [x] Include -h and -v options
-- [x] Remove need to specify if structure exists
-- [x] Make keep tempfiles optional
-- [x] Implement functionality with supplied directory
-- [x] Implement functionality with PDB download
-- [x] Implement functionality with AlphaFold download
-- [x] Modified Dockerfile
-- [x] Fix usage with Docker
-
-## New bugs found
-- Supplying .cif files returns ```The query file format is ambiguous for query XXXX.cif_U```. The added **_U** I do not know why or how it happens.
-- In the logic for the savgol_filter window_size needs to be the same or lower than the length of x. Corrected that
-to be that if window_size > len(x) => window_size == len(x)
 
 ## Getting Started
 
