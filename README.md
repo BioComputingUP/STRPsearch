@@ -106,19 +106,19 @@ Which returns the following commands:
 
 ## Examples
 
-If you already have a PDB/CIF formatted structure file stored in a directory and you want to query all the chains in the structure, keeping temporary directory and files:
+If you already have a PDB/CIF formatted structure file and you want to query all the chains in the structure, keeping temporary directory and files:
 ```
-python3 ./bin/main.py analyze-directory /input/file[.pdb/.cif] /output/directory --temp-dir /tmp --keep-temp
-```
-
-If you want to automatically download and query a specific experimental structure from PDB (e.g. chain C of 4g8l PDB structure), without keeping temporary directory and files:
-```
-python3 ./bin/main.py download-pdb 4g8l /output/directory --chain C
+python3 ./bin/main.py query-file /input/file /output/directory --keep-temp
 ```
 
-If you want to automatically download and query a predicted-model from AlphaFold version 4 (e.g. UniProt ID: Q05823)
+If you want to automatically download and query a specific experimental structure from PDB (e.g. chain B of PDB structure 1A0R), without keeping temporary directory and files:
 ```
-python3 ./bin/main.py download-model Q05823 4 /output/directory 
+python3 ./bin/main.py download-pdb 1a0r /output/directory --chain B
+```
+
+If you want to automatically download and query a predicted-model from AlphaFold version 4 (e.g. UniProt ID: Q9HXJ7)
+```
+python3 ./bin/main.py download-model Q9HXJ7 4 /output/directory 
 ```
 
 
