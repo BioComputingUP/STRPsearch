@@ -38,7 +38,7 @@ python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
 ```
 docker build -t repeatsdb-lite .
 ```
-2. To run the container, while being able to interact with the files on the host machine, use the following command:
+2. To run the container in an interactive mode, use the following command:
 ```
 docker run -it --entrypoint /bin/bash -v /home/directory/:/app repeatsdb-lite
 ```
