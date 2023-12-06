@@ -40,9 +40,9 @@ docker build -t repeatsdb-lite .
 ```
 2. To run the container in an interactive mode, use the following command:
 ```
-docker run -it --entrypoint /bin/bash -v /home/directory/:/app repeatsdb-lite
+docker run -it --entrypoint /bin/bash -v /mount/directory/:/app repeatsdb-lite
 ```
-Be aware that `-v /home/directory/:/app` command mounts the specified directory (`/home/directory/`) to the working directory of the container. This ables the container to read and write files on the host machine.
+Be aware that `-v /mount/directory/:/app` command mounts the specified directory (`/mount/directory/`) to the working directory of the container. This ables the container to read and write files on the host machine.
 
 3. Navigate to the main directory of the project and run the the software with the following command:
 ```
