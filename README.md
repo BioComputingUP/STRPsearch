@@ -42,7 +42,8 @@ docker build -t repeatsdb-lite .
 ```
 docker run -it --entrypoint /bin/bash -v /home/directory/:/app repeatsdb-lite
 ```
-Be aware that `-v /home/directory/:/app` command mounts the specified directory (/home/directory) to the working directory of the container. This makes the container to have read and write files on the host machine.
+Be aware that `-v /home/directory/:/app` command mounts the specified directory (`/home/directory/`) to the working directory of the container. This ables the container to read and write files on the host machine.
+
 3. Run the software similar to other methods
 ```
 python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
