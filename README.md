@@ -38,13 +38,15 @@ python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
 ```
 docker build -t repeatsdb-lite .
 ```
-2. To run the container, use the following command:
+2. To run the container, while being able to interact with the files on the host machine, use the following command:
 ```
-docker run -v $(pwd):/app/ repeatsdb-lite analyze-directory input/directory/ output/directory
+docker run -it --entrypoint /bin/bash -v /home/directory/:/app repeatsdb-lite
 ```
-The line `-v $(pwd):/app/` mounts the current directory (`$(pwd)`) to the working directory of the 
-container specified in the `Dockerfile` by the line `WORKDIR /app`. This way, the containerized application
-is able to access the input and write the output to the local machine.
+Be aware that `-v /home/directory/:/app` command mounts the specified directory (/home/directory) to the working directory of the container. This makes the container to have read and write files on the host machine.
+3. Run the software similar to other methods
+```
+python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
+```
 
 ## Usage:
 The tools has three Commands, each with its positional arguments and options. 
