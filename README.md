@@ -76,7 +76,7 @@ Which returns the following commands:
 * `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
 * `--help`: Show this message and exit
 
-## Download-pdb
+## download-pdb
 
 ### Arguments
 * `pdb_id` (TEXT): PDB ID of the experimental structure to download and query. This argument is required. Default: None
