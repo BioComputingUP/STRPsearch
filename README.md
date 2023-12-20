@@ -1,5 +1,5 @@
-# RepeatsDB-lite 2.0
-RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identification and mapping of structured tandem repeats in proteins (STRPs).
+# STRPsearch
+STRPsearch is a specialized tool designed for rapid and precise identification and mapping of structured tandem repeats in proteins (STRPs).
 
 ## Getting Started
 
@@ -19,34 +19,34 @@ conda install -c conda-forge pymol-open-source
 ```
 2. Navigate to the main directory of the project and run the the software with the following command:
 ```
-python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
+python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ### Method 2: Using Conda Environment
 1. Import and activate the Conda environment from the `environment.yml` file:
 ```
 conda env create -f environment.yml
-conda activate predstrp_env
+conda activate strpsearch_env
 ```
 2. Navigate to the main directory of the project and run the the software with the following command:
 ```
-python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
+python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ### Method 3: Using Docker
 1. Build the Docker image using the provided `Dockerfile`:
 ```
-docker build -t repeatsdb-lite .
+docker build -t strpsearch .
 ```
 2. To run the container in an interactive mode, use the following command:
 ```
-docker run -it --entrypoint /bin/bash -v /mount/directory/:/app repeatsdb-lite
+docker run -it --entrypoint /bin/bash -v /mount/directory/:/app strpsearch
 ```
 Be aware that `-v /mount/directory/:/app` command mounts the specified directory (`/mount/directory/`) to the working directory of the container. This ables the container to read and write files on the host machine.
 
 3. Navigate to the main directory of the project and run the the software with the following command:
 ```
-python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
+python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ## Usage:
@@ -54,7 +54,7 @@ The tools has three Commands, each with its positional arguments and options.
 
 To list the available commands run:
 
-```python3 bin/main.py --help```
+```python3 bin/strpsearch.py --help```
 
 Which returns the following commands:
 
@@ -111,17 +111,17 @@ Which returns the following commands:
 
 If you already have a PDB/CIF formatted structure file and you want to query all the chains in the structure, keeping temporary directory and files:
 ```
-python3 ./bin/main.py query-file /input/file /output/directory --keep-temp
+python3 ./bin/strpsearch.py query-file /input/file /output/directory --keep-temp
 ```
 
 If you want to automatically download and query a specific experimental structure from PDB (e.g. chain B of PDB structure 1A0R), without keeping temporary directory and files:
 ```
-python3 ./bin/main.py download-pdb 1a0r /output/directory --chain B
+python3 ./bin/strpsearch.py download-pdb 1a0r /output/directory --chain B
 ```
 
 If you want to automatically download and query a predicted-model from AlphaFold version 4 (e.g. UniProt ID: Q9HXJ7)
 ```
-python3 ./bin/main.py download-model Q9HXJ7 4 /output/directory 
+python3 ./bin/strpsearch.py download-model Q9HXJ7 4 /output/directory 
 ```
 
 
