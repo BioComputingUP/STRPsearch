@@ -4,7 +4,7 @@ STRPsearch is a specialized tool designed for rapid and precise identification a
 ## Getting Started
 
 To get started with the project, before anything you have to unzip the databases.zip inside the 'data' directory.
-For doing so, navigate to the repository directory and use the following command:
+For doing so, navigate to the main directory of the project and use the following command:
 ```
 unzip data/databases.zip -d data/
 ```
