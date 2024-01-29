@@ -1,25 +1,5 @@
-# Bugfix/Refactoring branch
-
-# RepeatsDB-lite 2.0
-RepeatsDB-lite 2.0 is a specialized tool designed for rapid and precise identification and mapping of structured tandem repeats in proteins (STRPs).
-
-## Bugfix/Checklist
-
-- [x] Fix usage
-- [x] Fix installation with pip
-- [x] Include -h and -v options
-- [x] Remove need to specify if structure exists
-- [x] Make keep tempfiles optional
-- [x] Implement functionality with supplied directory
-- [x] Implement functionality with PDB download
-- [x] Implement functionality with AlphaFold download
-- [x] Modified Dockerfile
-- [x] Fix usage with Docker
-
-## New bugs found
-- Supplying .cif files returns ```The query file format is ambiguous for query XXXX.cif_U```. The added **_U** I do not know why or how it happens.
-- In the logic for the savgol_filter window_size needs to be the same or lower than the length of x. Corrected that
-to be that if window_size > len(x) => window_size == len(x)
+# STRPsearch
+STRPsearch is a specialized tool designed for rapid and precise identification and mapping of structured tandem repeats in proteins (STRPs).
 
 ## Getting Started
 
@@ -35,105 +15,113 @@ Note: Inside the requirements.txt file, you'll find a commented section that inc
 ```
 conda install -c conda-forge -c bioconda foldseek
 conda install -c bioconda tmalign
+conda install -c conda-forge pymol-open-source
 ```
-2. Run the project with the following command:
+2. Navigate to the main directory of the project and run the software with the following command:
 ```
-python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
+python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ### Method 2: Using Conda Environment
-1. Import and activate the Conda environment from the `rdblite_env.yml` file:
+1. Import and activate the Conda environment from the `environment.yml` file:
 ```
-conda env create -f rdblite_env.yml
-conda activate rdblite_env
+conda env create -f environment.yml
+conda activate strpsearch_env
 ```
-2. Run the project inside the environment with the following command:
+2. Navigate to the main directory of the project and run the software with the following command:
 ```
-python3 ./bin/main.py [OPTIONS] COMMAND [ARGS]...
+python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
 ```
 
 ### Method 3: Using Docker
 1. Build the Docker image using the provided `Dockerfile`:
 ```
-docker build -t repeatsdb-lite .
+docker build -t strpsearch .
 ```
-2. To run the container, use the following command:
+2. To run the container in an interactive mode, use the following command:
 ```
-docker run -v $(pwd):/app/ repeatsdb-lite analyze-directory input/directory/ output/directory
+docker run -it --entrypoint /bin/bash -v /mount/directory/:/app strpsearch
 ```
-The line `-v $(pwd):/app/` mounts the current directory (`$(pwd)`) to the working directory of the 
-container specified in the `Dockerfile` by the line `WORKDIR /app`. This way, the containerized application
-is able to access the input and write the output to the local machine.
+Be aware that `-v /mount/directory/:/app` command mounts the specified directory (`/mount/directory/`) to the working directory of the container. This ables the container to read and write files on the host machine.
+
+3. Navigate to the main directory of the project and run the software with the following command:
+```
+python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
+```
 
 ## Usage:
 The tools has three Commands, each with its positional arguments and options. 
 
 To list the available commands run:
 
-```python3 bin/main.py --help```
+```python3 bin/strpsearch.py --help```
 
 Which returns the following commands:
 
 | Command | Description |
 |---------|-------------|
-| `analyze-directory` | Run the pipeline on a directory containing PDB files |
-| `download-model` | Run the pipeline by querying a UNIPROT ID and downloading an AlphaFold model |
-| `download-pdb` | Run the pipeline downloading a structure and querying a specific chain |
-| `version` | Show the version and exit. | 
+| `query-file` | Query an existing PDB/CIF formatted structure file by providing the file path |
+| `download-pdb` | Download and query a structure from PDB by providing the PDB ID and the specific Chain of interest |
+| `download-model` |  Download and query an AlphaFold model by providing the UniProt ID and the AlphaFold version of interest |
+| `version` | Show the version and exit | 
 
-## Analyze-directory
-
-### Arguments
-* `in_dir` (TEXT): Path to directory containing PDB files. This argument is required. Default: None.
-* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
-
-### Options
-* `--keep-temp / --no-keep-temp`: Keep temporary files. Default: no-keep-temp.
-* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
-* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--help`: Show this message and exit.
-
-## Download-model
+## query-file
 
 ### Arguments
-* `uniprot_id` (TEXT): UniProt ID of the AlphaFold structure to query. This argument is required. Default: None.
-* `af_version` (TEXT): Version of AlphaFold to download structure from. This argument is required. Default: None.
-* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
+* `input_file` (TEXT):  Path to the input structure file to query (PDB/mmCIF). This argument is required. Default: None
+* `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
 
 ### Options
-* `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
-* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
-* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--help`: Show this message and exit.
+* `--chain` (TEXT): Specific chain to query from the structures. Default: all
+* `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
+* `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--help`: Show this message and exit
 
-## Download-pdb
+## download-pdb
 
 ### Arguments
-* `pdb_id` (TEXT): PDB ID to download. This argument is required. Default: None.
-* `pdb_chain` (TEXT): PDB chain to query. This argument is required. Default: None.
-* `out_dir` (TEXT): Path to directory where output will be saved. This argument is required. Default: None.
+* `pdb_id` (TEXT): PDB ID of the experimental structure to download and query. This argument is required. Default: None
+* `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
 
 ### Options
-* `--keep-temp` / `--no-keep-temp`: Keep temporary files. Default: no-keep-temp.
-* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01.
-* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4.
-* `--help`: Show this message and exit.
+* `--chain` (TEXT): Specific chain to query from the structures. Default: all
+* `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
+* `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--help`: Show this message and exit
+
+## download-model
+
+### Arguments
+* `uniprot_id` (TEXT): UniProt ID of the AlphaFold-predicted model to download and query. This argument is required. Default: None
+* `af_version` (TEXT): Version of AlphaFold to download predicted models from. This argument is required. Default: None
+* `out_dir` (TEXT): Path to the output directory. This argument is required. Default: None
+
+### Options
+* `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
+* `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
+* `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
+* `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--help`: Show this message and exit
 
 ## Examples
 
-If you already have one or more pdb/mmcif format structures of **single polypeptide chains** stored in a directory, while also keeping temporary files:
+If you already have a PDB/CIF formatted structure file, and you want to query all the chains in the structure, keeping temporary directory and files:
 ```
-python3 ./bin/main.py analyze-directory /input/directory -o /output/directory --keep-temp 
-```
-
-If you want to download a specific structure from PDB (e.g. chain C of 4g8l PDB structure), without keeping temporary files:
-```
-python3 ./bin/main.py download-pdb 4g8l C /output/directory 
+python3 ./bin/strpsearch.py query-file /input/file /output/directory --keep-temp
 ```
 
-If you want to download a predicted structure from AlphaFold (e.g. UniProt ID: Q05823)
+If you want to automatically download and query a specific experimental structure from PDB (e.g. chain B of PDB structure 1A0R), without keeping temporary directory and files:
 ```
-python3 ./bin/main.py download-model Q05823 4 /output/directory 
+python3 ./bin/strpsearch.py download-pdb 1a0r /output/directory --chain B
+```
+
+If you want to automatically download and query a predicted-model from AlphaFold version 4 (e.g. UniProt ID: Q9HXJ7)
+```
+python3 ./bin/strpsearch.py download-model Q9HXJ7 4 /output/directory 
 ```
 
 

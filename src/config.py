@@ -4,13 +4,17 @@ foldseek_exe_path = "foldseek"
 
 tmalign_exe_path = "TMalign"
 
+temp_dir = "/tmp"
+
+chain = "all"
+
+keep_temp = False
+
 structure_exists = None
 
 in_dir = None
 
 out_dir = None
-
-temp_dir = "/tmp"
 
 pdb_id = None
 
@@ -22,7 +26,7 @@ af_version = None
 
 max_eval_p = 0.1
 
-min_height_p = 0.3
+min_height_p = 0.35
 
 distance_p = 0.65
 
@@ -35,5 +39,3 @@ prominence_p = 0.001
 threshold_p = 0
 
 window_p = 0.4
-
-keep_temp = False

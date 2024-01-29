@@ -32,7 +32,7 @@ def check_overlap(range1, range2):
     range1 = set(range1)
     overlapped = len(range1.intersection(range2))
     overlap_percentage = overlapped / len(range1)
-    if overlap_percentage >= 0.5:
+    if overlap_percentage >= 0.66:
         return True
     return False
 

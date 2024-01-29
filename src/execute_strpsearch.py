@@ -1,17 +1,16 @@
 from Bio.PDB import MMCIFParser, PDBIO, is_aa, PDBParser
 from scipy.signal import find_peaks
 from rich import print as rprint
-from . import alignment_utils
-from . import general_utils
+from . import alignment_utils as au
+from . import general_utils as gu
 from . import config as cfg
 import pandas as pd
-import mimetypes
+import traceback
 import tempfile
 import logging
 import shutil
 import typer
 import os
-
 
 # Define the computational parameters
 distance_p = cfg.distance_p
@@ -29,7 +28,7 @@ io_handler = PDBIO()
 
 # Specify the paths to ground-truth libraries
 tul_db = "data/databases/tul_foldseek_db/db"
-rul_db = "data/databases/tmax"
+rul_db = "data/databases/rul_structure_db/"
 ontology_df = pd.read_csv("data/ontology.tsv", delimiter="\t")
 
 
@@ -37,11 +36,10 @@ def execute_predstrp(
         structure_dir: str,
         out_dir: str,
         temp_dir: str,
-        max_eval_p: float,
-        min_height_p: float,
         keep_temp: bool,
+        max_eval_p: float,
+        min_height_p: float
 ):
-
     logging.basicConfig(
         filename=os.path.join(out_dir, "debug.log"),
         filemode="w",
@@ -49,10 +47,10 @@ def execute_predstrp(
         level=logging.WARNING
     )
 
-    pdb_cif_fps, have_space_fps = general_utils.check_files(in_dir=structure_dir)
+    pdb_cif_fps, have_space_fps = gu.check_files(in_dir=structure_dir)
     if len(pdb_cif_fps) > 0:
         if len(have_space_fps) > 0:
-            rprint(f"\n[bold][{general_utils.time()}][/bold] [bold red]"
+            rprint(f"\n[bold][{gu.time()}][/bold] [bold red]"
                    f"Please remove the spacing (' ') from the following files:\n")
             logging.error(f"Please remove the spacing (' ') from the following files:")
             for fp in have_space_fps:
@@ -60,12 +58,12 @@ def execute_predstrp(
                 logging.error(f"{fp}")
             raise typer.Abort()
     else:
-        rprint(f"\n[bold][{general_utils.time()}][/bold] [bold red]"
+        rprint(f"\n[bold][{gu.time()}][/bold] [bold red]"
                f"No file with pdb/cif extension was found")
         logging.error(f"No file with pdb/cif extension was found")
         raise typer.Abort()
 
-    rprint(f"\n[bold][{general_utils.time()}] "
+    rprint(f"\n[bold][{gu.time()}] "
            f"Running PredSTRP with the following parameters:")
     rprint(f"[bold blue]"
            f"Input directory: {structure_dir}")
@@ -82,10 +80,10 @@ def execute_predstrp(
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 
     # Align the query structure/structures against TUL (Tri-Unit-Library) via Foldseek
-    rprint(f"[bold][{general_utils.time()}] "
+    rprint(f"[bold][{gu.time()}] "
            f"Finding potential hits ...\n")
 
-    alignment_utils.search_tul(
+    au.search_tul(
         foldseek_exe_path=cfg.foldseek_exe_path,
         query_dir=structure_dir,
         tul_fs_db=tul_db,
@@ -94,7 +92,7 @@ def execute_predstrp(
     )
 
     # Create a dataframe from hits, if any
-    found_hit, target_df = alignment_utils.find_target(
+    found_hit, target_df = au.find_target(
         output_file=fs_output,
         max_eval=max_eval_p
     )
@@ -102,22 +100,29 @@ def execute_predstrp(
     # If hits were found, process one by one
     if found_hit:
         temp_query_dir_list = []
+        error_count = 0
         for idx in range(len(target_df)):
             try:
                 row = target_df.iloc[idx]
                 # Extract essential variables
-                query_name = row["query"]
+                query_id = "_".join(row["query"].split("_")[:-1])
+                query_chain = row["query"].split("_")[-1][:-4]
+                query_name = query_id + "_" + query_chain
                 target_name = row["target"]
                 target_chain = target_name[4]
                 e_val = row["e_value"]
                 ct = str(row["t_ct"])
-                target_avg_len = row["t_avg_length"]
-                target_classi = general_utils.get_repeat_classi(
+                target_avg_len = float(row["t_avg_length"])
+                target_classi = gu.get_repeat_classi(
                     ontology_df=ontology_df,
                     code=ct
                 )
 
-                rprint(f"[bold][{general_utils.time()}] "
+                max_insertion_p = 60
+                if ct == "4.4":
+                    max_insertion_p *= 2
+
+                rprint(f"[bold][{gu.time()}] "
                        f"Processing hit {idx + 1}/{len(target_df)} ...")
                 rprint(f"[bold blue]"
                        f"Query: {query_name}")
@@ -126,33 +131,10 @@ def execute_predstrp(
                 rprint(f"[bold blue]"
                        f"Classification: {target_classi}\n")
 
-                # Define insertion length, for Beta-propellers (4.4) it could be much higher
-                insert_len = 60
-                if ct == "4.4":
-                    insert_len = 250
-
                 # Locate the path to query structure
-                query_path = os.path.join(os.path.join(structure_dir, query_name))
-                # Check the file format of the query structure and parse accordingly using proper parser
-                mime_type, encoding = mimetypes.guess_type(query_path)
-                if mime_type:
-                    if "pdb" in mime_type:
-                        # Parse the structure from the PDB file
-                        qstructure = pdb_parser.get_structure(
-                            query_name, query_path)
-                    elif "cif" in mime_type:
-                        # Parse the structure from the PDB file
-                        qstructure = cif_parser.get_structure(
-                            query_name, query_path)
-                    else:
-                        rprint("[bold red]"
-                               "Only PDB / mmCIF format is accepted for query files\n")
-                        logging.error("Only PDB / mmCIF format is accepted for query files")
-                else:
-                    rprint(f"[bold red]"
-                           f"The query file format is ambiguous for query {query_name}\n")
-                    logging.error(f"The query file format is ambiguous for query {query_name}")
-
+                query_path = os.path.join(os.path.join(structure_dir, f"{query_name}.pdb"))
+                # Parse the structure from the PDB file
+                qstructure = pdb_parser.get_structure(query_name, query_path)
                 # Extract the chain letter
                 qchain_letter = list(qstructure.get_chains())[0].id
                 # Designate the chain from the structure
@@ -169,7 +151,7 @@ def execute_predstrp(
                 tchain = tstructure[0][target_chain]
 
                 # Fragmentize the query based on the length of the target rep unit
-                total_fragment_list = general_utils.get_res_frames(
+                total_fragment_list = gu.get_res_frames(
                     res_range=qchain_residues,
                     length=len(tchain),
                     step=frame_step
@@ -183,7 +165,7 @@ def execute_predstrp(
                     fragment_start = fragment[0].id[1]
                     fragment_end = fragment[-1].id[1]
                     fragment_out_path = os.path.join(fragment_dir, f"{query_name}_{fragment_start}_{fragment_end}.pdb")
-                    general_utils.get_structure(
+                    gu.get_structure(
                         res_range=fragment,
                         chain_letter=qchain_letter,
                         structure=qstructure,
@@ -193,12 +175,14 @@ def execute_predstrp(
                     fragment_path_list.append(fragment_out_path)
 
                 # Get the data for the TM-score graph
-                x, y = alignment_utils.get_tmscore_graph_data(
+                x, y = au.get_tmscore_graph_data(
                     query_name=query_name,
                     fragment_path_list=fragment_path_list,
                     target_repunit_path=target_repunit_path,
                     tmalign_exe_path=cfg.tmalign_exe_path
                 )
+                # Convert numpy arrays to lists
+                x, y = list(x), list(y)
 
                 # """TEMPORARY BLOCK"""
                 # import matplotlib.pyplot as plt
@@ -206,21 +190,23 @@ def execute_predstrp(
                 # fig, ax = plt.subplots(dpi=200)
                 # ax.plot(x, y, color="black", linewidth=1.2)
                 # # Format the plot
-                # ax.set_xlabel("Residue Number")
-                # ax.set_ylabel("TM-score")
+                # ax.set_xlabel("Residue Number", fontsize=20)
+                # ax.set_ylabel("TM-score", fontsize=20)
+                # plt.xticks(fontsize=16)
+                # plt.yticks(fontsize=16)
                 # plt.tight_layout()
                 # plt.savefig(f"/home/soroushm/Documents/repeatsdb-lite-2_test/{target_name}1.png", format="png")
                 # plt.close()
 
                 # Smooth the graph data
-                y = general_utils.smooth_graph(
+                y = gu.smooth_graph(
                     y=y,
                     target_avg_len=target_avg_len,
                     window_p=window_p
                 )
 
                 # Adjust the graph ends
-                x, y = general_utils.adjust_graph_ends(
+                x, y = gu.adjust_graph_ends(
                     x=x,
                     y=y,
                     frame_step=frame_step
@@ -246,15 +232,17 @@ def execute_predstrp(
                 # ax.plot(x, y, color="black", linewidth=1.2)
                 # ax.scatter(peak_residue_nums, peak_height_nums, marker="v", c="red", s=70, alpha=None)
                 # # Format the plot
-                # ax.set_xlabel("Residue Number")
-                # ax.set_ylabel("TM-score")
+                # ax.set_xlabel("Residue Number", fontsize=20)
+                # ax.set_ylabel("TM-score", fontsize=20)
+                # plt.xticks(fontsize=16)
+                # plt.yticks(fontsize=16)
                 # plt.tight_layout()
                 # # Save at the specified path in png format
                 # plt.savefig(f"/home/soroushm/Documents/repeatsdb-lite-2_test/{target_name}2.png", format="png")
                 # plt.close()
 
                 # Calculate the range of potential units based the on the peak positions
-                predicted_unit_list = general_utils.calculate_ranges(
+                predicted_unit_list = gu.calculate_ranges(
                     peak_residue_nums=peak_residue_nums,
                     distance=round(target_avg_len),
                     max_length=qchain_residues[-1].id[1],
@@ -262,23 +250,27 @@ def execute_predstrp(
                 )
 
                 # Map region / regions based on the obtained info, if any
-                regions_dict = general_utils.parse_regions(
-                    query_name, predicted_unit_list, insert_len
+                regions_dict = gu.parse_regions(
+                    query_name, predicted_unit_list, max_insertion_p
                 )
 
                 # Check if any repeat region was mapped
                 if regions_dict:
                     if len(regions_dict) > 1:
-                        rprint(f"[bold][{general_utils.time()}][/bold] [bold green]"
+                        rprint(f"[bold][{gu.time()}][/bold] [bold green]"
                                f"{len(regions_dict)} potential repeat regions were found with hit "
-                               f"{idx + 1}/{len(target_df)}\n")
+                               f"{idx + 1}/{len(target_df)}:")
                     else:
-                        rprint(f"[bold][{general_utils.time()}][/bold] [bold green]"
+                        rprint(f"[bold][{gu.time()}][/bold] [bold green]"
                                f"1 potential repeat region was found with hit "
-                               f"{idx + 1}/{len(target_df)}\n")
+                               f"{idx + 1}/{len(target_df)}:")
+
+                    for idx, region_id in enumerate(list(regions_dict.keys())):
+                        rprint(f"[bold blue]"
+                               f"Region {idx + 1}: {region_id}")
 
                     # Create a directory with the name of the query at the designated temporary directory
-                    temp_query_dir = os.path.join(temp_dir, query_name)
+                    temp_query_dir = os.path.join(temp_dir, f"{query_name}")
                     os.makedirs(temp_query_dir, exist_ok=True)
                     temp_query_dir_list.append(temp_query_dir)
 
@@ -287,19 +279,27 @@ def execute_predstrp(
                         start_res = components["units"][0][0]
                         end_res = components["units"][-1][1]
 
+                        # Because the end residue of each repeat region is always estimated
+                        # Check if it actually exists on the query chain and not missing
+                        # If missing (index error), find the largest smaller residue number before (error handling)
+                        try:
+                            gu.get_res_index(end_res, qchain_residues)
+                        except IndexError:
+                            end_res = gu.find_largest_smaller_number(end_res, qchain_residues)
+
                         # Define an output name
                         out_name = f"{region_id}_{ct}_{e_val}"
 
                         region_out_path = os.path.join(temp_query_dir, f"{out_name}.pdb")
 
                         # Extract and save the structure of the region
-                        region_range = general_utils.get_chain_range(
+                        region_range = gu.get_chain_range(
                             start=start_res,
                             end=end_res,
                             chain_residues=qchain_residues
                         )
 
-                        general_utils.get_structure(
+                        gu.get_structure(
                             res_range=region_range,
                             chain_letter=qchain_letter,
                             structure=qstructure,
@@ -310,7 +310,7 @@ def execute_predstrp(
                         # Create and save the PyMOL session of the repeat region highlighted by the integral components
                         pymol_out_path = os.path.join(temp_query_dir, f"{out_name}.pse")
 
-                        general_utils.create_pymol_session(
+                        gu.create_pymol_session(
                             region_id=region_id,
                             structure_path=query_path,
                             components=components,
@@ -320,7 +320,7 @@ def execute_predstrp(
                         # Create the mapped graph plot
                         figure_out_path = os.path.join(temp_query_dir, f"{out_name}.png")
 
-                        general_utils.plot_tmscore_graph(
+                        gu.plot_tmscore_graph(
                             x=x,
                             y=y,
                             region_components=components,
@@ -330,34 +330,35 @@ def execute_predstrp(
                         # Create the JSON file
                         json_out_path = os.path.join(temp_query_dir, f"{out_name}.json")
 
-                        general_utils.make_json(
+                        gu.make_json(
                             structure_id=query_name,
                             chain_id=qchain_letter,
                             ct=ct,
-                            region_id=region_id ,
+                            region_id=region_id,
                             components=components,
                             out_path=json_out_path,
                         )
 
                     # Delete the fragment directory
-                    shutil.rmtree(fragment_dir)
+                    # shutil.rmtree(fragment_dir)
 
                 else:
-                    rprint(f"[bold][{general_utils.time()}][/bold] [bold yellow]"
+                    rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
                            f"No potential repeat region was found with hit "
                            f"{idx + 1}/{len(target_df)}\n")
-            except Exception as error:
-                rprint(f"[bold red]"
-                       f"{error}")
-                logging.error(error)
+            except:
+                error_count += 1
+                traceback.print_exc()
+                logging.error(traceback.format_exc())
 
-        rprint(f"[bold][{general_utils.time()}] "
-               f"All the hits were processed\n")
+        if temp_query_dir_list:
+            rprint(f"\n[bold][{gu.time()}] "
+                   f"All the hits were processed\n")
 
-        # Transfer the files from temporary directory to the final query output directory
-        rprint(f"[bold]"
-               f"[{general_utils.time()}] "
-               f"Transferring the final results to the output directory ...\n")
+            # Transfer the files from temporary directory to the final query output directory
+            rprint(f"[bold]"
+                   f"[{gu.time()}] "
+                   f"Transferring the final results to the output directory ...\n")
 
         # Loop the output directories in the temporary directory
         for temp_query_dir in temp_query_dir_list:
@@ -379,7 +380,7 @@ def execute_predstrp(
 
                 filename_df = pd.DataFrame(filename_dict)
                 # Filter the overlapping regions
-                filtered_df = alignment_utils.filter_overlap(filename_df)
+                filtered_df = au.filter_overlap(filename_df)
 
                 src_region_fps_dict = {}
                 for row_idx in range(len(filtered_df)):
@@ -400,7 +401,11 @@ def execute_predstrp(
                 # Get the name of the current query directory
                 dir_name = os.path.basename(temp_query_dir)
                 # For each query, define the path of the final output directory of that query
-                out_query_dir = os.path.join(out_dir, dir_name)
+                out_query_dir = os.path.join(
+                    out_dir,
+                    f"{'_'.join(dir_name.split('_')[:-1])}_results",
+                    f"chain_{dir_name.split('_')[-1]}"
+                )
                 # Create the final query output directory
                 os.makedirs(out_query_dir, exist_ok=True)
                 # Convert the dict to pandas df
@@ -413,13 +418,14 @@ def execute_predstrp(
                         dst_name = "_".join(os.path.basename(filepath).split("_")[:-2]) + "." + extension
                         dst_path = os.path.join(out_region_dir, dst_name)
                         shutil.copy(filepath, dst_path)
-            except Exception as error:
-                rprint(f"[bold red]"
-                       f"{error}")
-                logging.error(error)
 
-        rprint(f"[bold][{general_utils.time()}] "
-               f"Job successfully finished\n")
+            except:
+                error_count += 1
+                traceback.print_exc()
+                logging.error(traceback.format_exc())
+
+        rprint(f"[bold][{gu.time()}] "
+               f"Task finished with {error_count} errors")
 
         # If keep_temp file is set to False, delete the temporary directory
         if not keep_temp:
@@ -427,7 +433,6 @@ def execute_predstrp(
 
     # If no hit was found, remove the created temp and output directories
     else:
-        rprint(f"[bold yellow]"
+        rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
                f"No hit was found below the specified maximum E-value of {max_eval_p}[/bold yellow]")
         shutil.rmtree(temp_dir)
-        shutil.rmtree(out_dir)

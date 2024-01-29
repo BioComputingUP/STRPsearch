@@ -8,11 +8,13 @@ WORKDIR /app
 COPY . /app
 
 # Create a conda environment and install dependencies
-RUN conda env create -f rdblite_env.yml
+RUN conda env create -f environment.yml
 
 ## Activate the environment
-RUN echo "source activate rdblite_env" > ~/.bashrc
-ENV PATH /opt/conda/envs/rdblite_env/bin:$PATH
+RUN echo "source activate strpsearch_env" > ~/.bashrc
+ENV PATH /opt/conda/envs/strpsearch_env/bin:$PATH
+
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 # Define the command to run your script
-ENTRYPOINT ["python3", "bin/main.py"]
+ENTRYPOINT ["python3", "bin/strpsearch.py"]

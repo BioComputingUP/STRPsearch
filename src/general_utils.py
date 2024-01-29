@@ -21,6 +21,12 @@ def get_res_index(res_num: str, chain_residues: list):
     return res_index[0]
 
 
+def find_largest_smaller_number(res_num: int, chain_residues: list):
+    smaller_numbers = [int(chain_res.id[1]) for chain_res in chain_residues if int(chain_res.id[1]) <= res_num]
+    largest_smaller_number = max(smaller_numbers)
+    return largest_smaller_number
+
+
 def get_chain_range(start, end, chain_residues: list):
     """
     Returns the range of subsection in a chain
@@ -276,6 +282,8 @@ def adjust_graph_ends(x, y, frame_step=1):
 
 
 def plot_tmscore_graph(x, y, region_components, out_path):
+    from matplotlib.lines import Line2D
+
     """
     Plots and saves a TM-score graph highlighted by integral components of the repeat region/regions
     """
@@ -301,6 +309,9 @@ def plot_tmscore_graph(x, y, region_components, out_path):
     # Format the plot
     ax.set_xlabel("Residue Number")
     ax.set_ylabel("TM-score")
+
+    # plt.xticks(fontsize=16)
+    # plt.yticks(fontsize=16)
     plt.tight_layout()
     # Save at the specified path in png format
     plt.savefig(out_path, format="png")
