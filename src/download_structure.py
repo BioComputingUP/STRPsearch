@@ -1,50 +1,121 @@
-import os
-from Bio.PDB import MMCIFParser, PDBIO, PDBList, Select
+from Bio.PDB import MMCIFParser, PDBParser, PDBIO, PDBList, Select
+from . import general_utils as gu
+from rich import print as rprint
+import mimetypes
 import requests
+import os
 
 
-def download_pdb_structure(pdb_id, pdb_chain, out_dir):
-    """Downloads the PDB structure of a given PDB ID,
-    extracts and saves a given chain at a given output dir"""
+class ChainSelector(Select):
 
-    class ChainSelector(Select):
-        def __init__(self, target_chain):
-            self.target_chain = target_chain
+    def __init__(self, target_chain):
+        self.target_chain = target_chain
 
-        def accept_chain(self, chain):
-            return chain.get_id() == self.target_chain
+    def accept_chain(self, chain):
+        if chain.get_id() == self.target_chain and chain.get_parent().id == 0:
+            return True
+
+
+def extract_chains(input_file, chain, out_dir):
+    filename = os.path.basename(input_file)[:-4]
+
+    mime_type, encoding = mimetypes.guess_type(input_file)
+    if mime_type:
+        if "pdb" in mime_type:
+            pdb_parser = PDBParser(QUIET=True)
+            # Parse the structure from the PDB file
+            structure = pdb_parser.get_structure(filename, input_file)
+        elif "cif" in mime_type:
+            # Instantiate essential modules
+            cif_parser = MMCIFParser(QUIET=True)
+            # Parse the structure from the PDB file
+            structure = cif_parser.get_structure(filename, input_file)
+        else:
+            rprint(f"[bold][{gu.time()}][bold] [bold red]"
+                   "Only PDB / mmCIF format is accepted for query files\n")
+            # logging.error("Only PDB / mmCIF format is accepted for query files")
+            return False
+    else:
+        rprint(f"[bold][{gu.time()}][bold] [bold red]"
+               f"The query file format is ambiguous for query {filename}\n")
+        # logging.error(f"The query file format is ambiguous for query {query_name}")
+        return False
+
+    structure_model = structure[0]
+    chain_list = []
+    if chain == "all":
+        for chain in structure_model:
+            chain_list.append(chain.id)
+    else:
+        chain = chain.upper()
+        chain_list.append(chain)
+
+    for chain in chain_list:
+        # Create a new structure with only the specified chain
+        selector = ChainSelector(chain)
+        io = PDBIO()
+        io.set_structure(structure)
+        output_path = os.path.join(out_dir, f"{filename}_{chain}.pdb")
+        io.save(output_path, select=selector)
+    return True
+
+
+def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
+    """
+    Downloads the PDB structure of a given PDB ID
+    Extracts and saves a given chain at a given output dir
+    Return the success status
+    """
+
+    pdb_id = pdb_id.lower()
 
     # Instantiate essential modules
-    cif_parser = MMCIFParser(QUIET=True)
     pdbl = PDBList()
 
-    pdbl.retrieve_pdb_file(pdb_id, pdir=out_dir, file_format="mmCif")
-    print(f"PDB structure {pdb_id} was downloaded successfully")
+    # Download the PDB structure
+    temp_structure_dir = os.path.join(temp_dir, "downloaded_structures")
+    os.makedirs(temp_structure_dir, exist_ok=True)
+    pdbl.retrieve_pdb_file(pdb_id, pdir=temp_structure_dir, file_format="mmCif")
+    temp_structure_path = os.path.join(temp_structure_dir, f"{pdb_id}.cif")
+    # Check if the download was successful
+    if not os.path.exists(temp_structure_path):
+        rprint(f"[bold][{gu.time()}][/bold] [bold red]"
+               f"Failed to download PDB structure {pdb_id}")
+        return False
+    else:
+        rprint(f"[bold][{gu.time()}][/bold] [bold]"
+               f"PDB structure {pdb_id} was downloaded successfully")
 
-    temp_pdb_path = os.path.join(out_dir, f"{pdb_id}.cif")
-    structure = cif_parser.get_structure(pdb_id, temp_pdb_path)
-    os.remove(temp_pdb_path)
-    # Create a new structure with only the specified chain
-    selector = ChainSelector(pdb_chain)
-    io = PDBIO()
-    io.set_structure(structure)
-    pdb_file_path = os.path.join(out_dir, f"{pdb_id}{pdb_chain}.pdb")
-    io.save(pdb_file_path, select=selector)
-    print(f"Chain {pdb_chain} of PDB structure {pdb_id} was extracted successfully")
+    success = extract_chains(
+        input_file=temp_structure_path,
+        chain=chain,
+        out_dir=out_dir
+    )
+
+    return success
 
 
 def download_alphafold_structure(uniprot_id, alphafold_version, out_dir):
-    """Downloads the AlphaFold structure of a given UniProt ID"""
+    """
+    Downloads the AlphaFold structure of a given UniProt ID
+    Return the success status
+    """
+
+    uniprot_id = uniprot_id.upper()
 
     url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v{alphafold_version}.pdb"
-    print(url)
+    rprint(f"[bold][{gu.time()}][/bold] [bold]"
+           f"Downloading AlphaFold-predicted model of {uniprot_id}\n")
     response = requests.get(url)
     # Check if the request was successful (status code 200)
-    output_path = os.path.join(out_dir, f"AF-{uniprot_id}-F1-model_v{alphafold_version}.pdb")
+    output_path = os.path.join(out_dir, f"AF-{uniprot_id}-F1-model_v{alphafold_version}_A.pdb")
     if response.status_code == 200:
-        with open(output_path, 'wb') as file:
+        with open(output_path, "wb") as file:
             file.write(response.content)
-        print(f"{uniprot_id} AlphaFold structure downloaded successfully")
+        rprint(f"[bold][{gu.time()}][/bold] [bold]"
+               f"AlphaFold-predicted model of {uniprot_id} was downloaded successfully")
+        return True
     else:
-        print(f"Failed to download {uniprot_id} AlphaFold structure. Status code: {response.status_code}")
-        raise FileExistsError
+        rprint(f"[bold][{gu.time()}][/bold] [bold red]"
+               f"Failed to download AlphaFold-predicted model of {uniprot_id}. Status code: {response.status_code}")
+        return False
