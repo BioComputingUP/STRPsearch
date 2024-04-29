@@ -64,8 +64,8 @@ def get_res_frames(res_range, length, step):
 
 
 def get_structure(res_range, chain_letter, structure, out_path, io_handler):
-    """T
-    rims and saves the structure in the range of start and end residues on a chain
+    """
+    Trims and saves the structure in the range of start and end residues on a chain
     """
 
     # Select residues within the specified range and chain

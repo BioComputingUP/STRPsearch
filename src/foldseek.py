@@ -8,7 +8,7 @@ class Foldseek:
         # Store executable path
         self.exe_path = exe_path
 
-    def easy_search(self, input_file, db, output_file, temp_dir, columns, eval="1.000E+01", exhaustive="0",
+    def easy_search(self, input_file, db, output_file, temp_dir, columns, eval="inf", exhaustive="0",
                     aln_type="2", cwd_path='.'):
         """Search one/multiple queries against a target database"""
         # Define arguments

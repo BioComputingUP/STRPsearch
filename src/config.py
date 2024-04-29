@@ -8,6 +8,8 @@ temp_dir = "/tmp"
 
 chain = "all"
 
+min_height_p = "auto"
+
 keep_temp = False
 
 structure_exists = None
@@ -25,8 +27,6 @@ uniprot_id = None
 af_version = None
 
 max_eval_p = 0.1
-
-min_height_p = 0.35
 
 distance_p = 0.65
 

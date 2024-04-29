@@ -62,7 +62,7 @@ def query_file(
             )
         ] = cfg.max_eval_p,
         min_height: Annotated[
-            float, typer.Option(
+            str, typer.Option(
                 help="Minimum height of TM-score signals to be processed"
             )
         ] = cfg.min_height_p,
@@ -86,6 +86,16 @@ def query_file(
     if not os.path.exists(input_file):
         rprint(f"[bold red]Input file does not exist")
         sys.exit()
+
+    if min_height != "auto":
+        try:
+            min_height = float(min_height)
+        except ValueError:
+            rprint("[bold red]'min_height' parameter must be a numerical value between 0 or 1[/bold red]\n")
+            sys.exit()
+        if min_height < 0 or min_height > 1:
+            rprint("[bold red]'min_height' parameter cannot be smaller than 0 or bigger than 1[/bold red]\n")
+            sys.exit()
 
     query_dir = os.path.join(out_dir, "query_structures")
     os.makedirs(query_dir)
@@ -137,7 +147,7 @@ def download_pdb(
             )
         ] = cfg.max_eval_p,
         min_height: Annotated[
-            float, typer.Option(
+            str, typer.Option(
                 help="Minimum height of TM-score signals to be processed"
             )
         ] = cfg.min_height_p
@@ -157,6 +167,16 @@ def download_pdb(
         sys.exit()
     else:
         temp_dir = tempfile.mkdtemp(dir=temp_dir)
+
+    if min_height != "auto":
+        try:
+            min_height = float(min_height)
+        except ValueError:
+            rprint("[bold red]'min_height' parameter must be a numerical value between 0 or 1[/bold red]\n")
+            sys.exit()
+        if min_height < 0 or min_height > 1:
+            rprint("[bold red]'min_height' parameter cannot be smaller than 0 or bigger than 1[/bold red]\n")
+            sys.exit()
 
     query_dir = os.path.join(out_dir, "query_structures")
     os.makedirs(query_dir)
@@ -182,16 +202,16 @@ def download_model(
                 help="UniProt ID of the AlphaFold-predicted model to download and query"
             )
         ],
-        af_version: Annotated[
-            str, typer.Argument(
-                help="Version of AlphaFold to download predicted models from"
-            )
-        ],
         out_dir: Annotated[
             str, typer.Argument(
                 help="Path to the output directory"
             )
         ],
+        af_version: Annotated[
+            str, typer.Option(
+                help="Version of AlphaFold to download predicted models from"
+            )
+        ] = cfg.af_version,
         temp_dir: Annotated[
             str, typer.Option(
                 help="Path to the temporary directory"
@@ -208,7 +228,7 @@ def download_model(
             )
         ] = cfg.max_eval_p,
         min_height: Annotated[
-            float, typer.Option(
+            str, typer.Option(
                 help="Minimum height of TM-score signals to be processed"
             )
         ] = cfg.min_height_p
@@ -228,6 +248,16 @@ def download_model(
         sys.exit()
     else:
         temp_dir = tempfile.mkdtemp(dir=temp_dir)
+
+    if min_height != "auto":
+        try:
+            min_height = float(min_height)
+        except ValueError:
+            rprint("[bold red]'min_height' parameter must be a numerical value between 0 or 1[/bold red]\n")
+            sys.exit()
+        if min_height < 0 or min_height > 1:
+            rprint("[bold red]'min_height' parameter cannot be smaller than 0 or bigger than 1[/bold red]\n")
+            sys.exit()
 
     query_dir = os.path.join(out_dir, "query_structures")
     os.makedirs(query_dir)

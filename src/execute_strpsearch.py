@@ -1,3 +1,5 @@
+import json
+
 from Bio.PDB import MMCIFParser, PDBIO, is_aa, PDBParser
 from scipy.signal import find_peaks
 from rich import print as rprint
@@ -11,6 +13,7 @@ import logging
 import shutil
 import typer
 import os
+import time
 
 # Define the computational parameters
 distance_p = cfg.distance_p
@@ -25,11 +28,13 @@ flexibility_p = 1 - distance_p
 cif_parser = MMCIFParser(QUIET=True)
 pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
-
 # Specify the paths to ground-truth libraries
 tul_db = "data/databases/tul_foldseek_db/db"
 rul_db = "data/databases/rul_structure_db/"
 ontology_df = pd.read_csv("data/ontology.tsv", delimiter="\t")
+# Load the JSON data from the file
+with open("data/ct_tmscore_means.json", 'r') as fp:
+    ct_tmscore_dict = json.load(fp)
 
 
 def execute_predstrp(
@@ -38,8 +43,9 @@ def execute_predstrp(
         temp_dir: str,
         keep_temp: bool,
         max_eval_p: float,
-        min_height_p: float
+        min_height_p: str,
 ):
+    start_time = time.time()
     logging.basicConfig(
         filename=os.path.join(out_dir, "debug.log"),
         filemode="w",
@@ -122,6 +128,15 @@ def execute_predstrp(
                 if ct == "4.4":
                     max_insertion_p *= 2
 
+                if min_height_p == "auto":
+                    if ct in ct_tmscore_dict.keys():
+                        final_min_height_p = round(ct_tmscore_dict[ct][0] - ct_tmscore_dict[ct][1], 2)
+                    else:
+                        final_min_height_p = 0.35
+                else:
+                    final_min_height_p = float(min_height_p)
+
+
                 rprint(f"[bold][{gu.time()}] "
                        f"Processing hit {idx + 1}/{len(target_df)} ...")
                 rprint(f"[bold blue]"
@@ -184,20 +199,6 @@ def execute_predstrp(
                 # Convert numpy arrays to lists
                 x, y = list(x), list(y)
 
-                # """TEMPORARY BLOCK"""
-                # import matplotlib.pyplot as plt
-                # # Plot the line graph
-                # fig, ax = plt.subplots(dpi=200)
-                # ax.plot(x, y, color="black", linewidth=1.2)
-                # # Format the plot
-                # ax.set_xlabel("Residue Number", fontsize=20)
-                # ax.set_ylabel("TM-score", fontsize=20)
-                # plt.xticks(fontsize=16)
-                # plt.yticks(fontsize=16)
-                # plt.tight_layout()
-                # plt.savefig(f"/home/soroushm/Documents/repeatsdb-lite-2_test/{target_name}1.png", format="png")
-                # plt.close()
-
                 # Smooth the graph data
                 y = gu.smooth_graph(
                     y=y,
@@ -215,7 +216,7 @@ def execute_predstrp(
                 # Find the peaks in the graph
                 peaks, _ = find_peaks(
                     x=y,
-                    height=min_height_p,
+                    height=final_min_height_p,
                     distance=round(len(tchain) * distance_p),
                     width=width_p,
                     prominence=prominence_p,
@@ -224,22 +225,6 @@ def execute_predstrp(
 
                 # Make a list of res numbers associating with the peak positions
                 peak_residue_nums = [x[peak_idx] for peak_idx in peaks if x[peak_idx] in qchain_residue_nums]
-
-                # """TEMPORARY BLOCK"""
-                # peak_height_nums = [y[peak_idx] for peak_idx in peaks if x[peak_idx] in qchain_residue_nums]
-                # # Plot the line graph
-                # fig, ax = plt.subplots(dpi=200)
-                # ax.plot(x, y, color="black", linewidth=1.2)
-                # ax.scatter(peak_residue_nums, peak_height_nums, marker="v", c="red", s=70, alpha=None)
-                # # Format the plot
-                # ax.set_xlabel("Residue Number", fontsize=20)
-                # ax.set_ylabel("TM-score", fontsize=20)
-                # plt.xticks(fontsize=16)
-                # plt.yticks(fontsize=16)
-                # plt.tight_layout()
-                # # Save at the specified path in png format
-                # plt.savefig(f"/home/soroushm/Documents/repeatsdb-lite-2_test/{target_name}2.png", format="png")
-                # plt.close()
 
                 # Calculate the range of potential units based the on the peak positions
                 predicted_unit_list = gu.calculate_ranges(
@@ -424,6 +409,12 @@ def execute_predstrp(
                 traceback.print_exc()
                 logging.error(traceback.format_exc())
 
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        time_stamp_path = os.path.join(out_dir, "time.txt")
+        with open(time_stamp_path, "w") as fp:
+            fp.write(str(elapsed_time))
+
         rprint(f"[bold][{gu.time()}] "
                f"Task finished with {error_count} errors")
 
@@ -433,6 +424,11 @@ def execute_predstrp(
 
     # If no hit was found, remove the created temp and output directories
     else:
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        time_stamp_path = os.path.join(out_dir, "time.txt")
+        with open(time_stamp_path, "w") as fp:
+            fp.write(str(elapsed_time))
         rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
                f"No hit was found below the specified maximum E-value of {max_eval_p}[/bold yellow]")
         shutil.rmtree(temp_dir)
