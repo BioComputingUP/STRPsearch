@@ -24,7 +24,7 @@ pdb_chain = None
 
 uniprot_id = None
 
-af_version = None
+af_version = 4
 
 max_eval_p = 0.1
 
