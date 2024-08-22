@@ -3,7 +3,11 @@ STRPsearch is a specialized tool designed for rapid and precise identification a
 
 ## Getting Started
 
-To get started with the project, you can choose one of the following methods:
+To get started with the project, first, extract the contents of `data/databases.zip` by running the following command: 
+```
+cd data && unzip databases.zip && ..
+```
+Then you can choose one of the following methods to set up the software:
 
 ### Method 1: Using requirements.txt
 
