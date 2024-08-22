@@ -5,7 +5,7 @@ STRPsearch is a specialized tool designed for rapid and precise identification a
 
 To get started with the project, first, extract the contents of `data/databases.zip` by running the following command: 
 ```
-cd data && unzip databases.zip && ..
+cd data && unzip databases.zip && cd ..
 ```
 Then you can choose one of the following methods to set up the software:
 
