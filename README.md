@@ -123,9 +123,9 @@ If you want to automatically download and query a specific experimental structur
 python3 ./bin/strpsearch.py download-pdb 1a0r /output/directory --chain B
 ```
 
-If you want to automatically download and query a predicted-model from AlphaFold version 4 (e.g. UniProt ID: Q9HXJ7)
+If you want to automatically download and query a predicted-model from AlphaFold (e.g. UniProt ID: Q9HXJ7)
 ```
-python3 ./bin/strpsearch.py download-model Q9HXJ7 4 /output/directory 
+python3 ./bin/strpsearch.py download-model Q9HXJ7 /output/directory 
 ```
 
 
