@@ -112,7 +112,7 @@ def execute_predstrp(
                 row = target_df.iloc[idx]
                 # Extract essential variables
                 query_id = "_".join(row["query"].split("_")[:-1])
-                query_chain = row["query"].split("_")[-1][:-4]
+                query_chain = row["query"].split("_")[-1]
                 query_name = query_id + "_" + query_chain
                 target_name = row["target"]
                 target_chain = target_name[4]

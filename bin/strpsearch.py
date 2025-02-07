@@ -71,11 +71,12 @@ def query_file(
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
 
-    if os.path.exists(out_dir):
-        rprint("[bold red]Output directory already exists[/bold red]\n")
-        sys.exit()
-    else:
-        os.makedirs(out_dir)
+    # if os.path.exists(out_dir):
+    #     rprint("[bold red]Output directory already exists[/bold red]\n")
+    #     sys.exit()
+    # else:
+    #     os.makedirs(out_dir)
+    os.makedirs(out_dir, exist_ok = True)
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")
@@ -98,7 +99,7 @@ def query_file(
             sys.exit()
 
     query_dir = os.path.join(out_dir, "query_structures")
-    os.makedirs(query_dir)
+    os.makedirs(query_dir, exist_ok=True)
 
     success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir)
     if not success:
@@ -156,11 +157,12 @@ def download_pdb(
     Download and query a structure from PDB by providing the PDB ID and the specific Chain of interest.
     """
 
-    if os.path.exists(out_dir):
-        rprint("[bold red]Output directory already exists[/bold red]\n")
-        sys.exit()
-    else:
-        os.makedirs(out_dir)
+    # if os.path.exists(out_dir):
+    #     rprint("[bold red]Output directory already exists[/bold red]\n")
+    #     sys.exit()
+    # else:
+    #     os.makedirs(out_dir)
+    os.makedirs(out_dir, exist_ok=True)
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")
@@ -179,7 +181,7 @@ def download_pdb(
             sys.exit()
 
     query_dir = os.path.join(out_dir, "query_structures")
-    os.makedirs(query_dir)
+    os.makedirs(query_dir, exist_ok=True)
 
     success = ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
     if not success:
@@ -237,11 +239,12 @@ def download_model(
     Download and query an AlphaFold model by providing the UniProt ID and the AlphaFold version of interest.
     """
 
-    if os.path.exists(out_dir):
-        rprint("[bold red]Output directory already exists[/bold red]\n")
-        sys.exit()
-    else:
-        os.makedirs(out_dir)
+    # if os.path.exists(out_dir):
+    #     rprint("[bold red]Output directory already exists[/bold red]\n")
+    #     sys.exit()
+    # else:
+    #     os.makedirs(out_dir)
+    os.makedirs(out_dir, exist_ok=True)
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")
