@@ -1,5 +1,7 @@
 # STRPsearch
 STRPsearch is a specialized tool designed for rapid and precise identification and mapping of structured tandem repeats in proteins (STRPs).
+If you find STRPsearch useful for your research, please cite:
+Mozaffari S, Arrías PN, Clementel D, Piovesan D, Ferrari C, Tosatto SCE, Monzon AM. STRPsearch: fast detection of structured tandem repeat proteins. Bioinformatics. 2024;40(12):btae690. https://doi.org/10.1093/bioinformatics/btae690.
 
 ## Getting Started
 
@@ -13,7 +15,7 @@ Then you can choose one of the following methods to set up the software:
 
 1. Install all the dependencies listed in the `requirements.txt` file:
 ```
-   pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 Note: Inside the requirements.txt file, you'll find a commented section that includes dependencies which cannot be installed with pip. To install these dependencies, you can use Conda by running the following commands:
 ```
