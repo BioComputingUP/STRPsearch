@@ -19,7 +19,6 @@ Note: Inside the requirements.txt file, you'll find a commented section that inc
 ```
 conda install -c conda-forge -c bioconda foldseek
 conda install -c bioconda tmalign
-conda install -c conda-forge pymol-open-source
 ```
 2. Navigate to the main directory of the project and run the software with the following command:
 ```
@@ -81,6 +80,7 @@ Which returns the following commands:
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
 * `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--pymol-pse / --no-pymol-pse`: Whether to create and output PyMOL session files. Default: no-pymol-pse
 * `--help`: Show this message and exit
 
 ## download-pdb
@@ -95,6 +95,7 @@ Which returns the following commands:
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
 * `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--pymol-pse / --no-pymol-pse`: Whether to create and output PyMOL session files. Default: no-pymol-pse
 * `--help`: Show this message and exit
 
 ## download-model
@@ -109,7 +110,14 @@ Which returns the following commands:
 * `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 * `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
 * `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
+* `--pymol-pse / --no-pymol-pse`: Whether to create and output PyMOL session files. Default: no-pymol-pse
 * `--help`: Show this message and exit
+
+## Note
+To generate and output PyMOL sessions using the --pymol-pse option, you must have PyMOL installed. You can install PyMOL using conda with one of the following commands, or compile it from source (https://www.pymol.org/):
+```
+conda install -c conda-forge -c schrodinger pymol-bundle=2.6
+conda install -c conda-forge pymol-open-source
 
 ## Examples
 
