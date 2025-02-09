@@ -10,6 +10,8 @@ chain = "all"
 
 min_height_p = "auto"
 
+pymol_pse = False
+
 keep_temp = False
 
 structure_exists = None

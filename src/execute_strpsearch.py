@@ -42,6 +42,7 @@ def execute_predstrp(
         out_dir: str,
         temp_dir: str,
         keep_temp: bool,
+        pymol_pse: bool,
         max_eval_p: float,
         min_height_p: str,
 ):
@@ -112,7 +113,7 @@ def execute_predstrp(
                 row = target_df.iloc[idx]
                 # Extract essential variables
                 query_id = "_".join(row["query"].split("_")[:-1])
-                query_chain = row["query"].split("_")[-1]
+                query_chain = row["query"].split("_")[-1][:-4]
                 query_name = query_id + "_" + query_chain
                 target_name = row["target"]
                 target_chain = target_name[4]
@@ -293,14 +294,15 @@ def execute_predstrp(
                         )
 
                         # Create and save the PyMOL session of the repeat region highlighted by the integral components
-                        pymol_out_path = os.path.join(temp_query_dir, f"{out_name}.pse")
+                        if pymol_pse:
+                            pymol_out_path = os.path.join(temp_query_dir, f"{out_name}.pse")
 
-                        gu.create_pymol_session(
-                            region_id=region_id,
-                            structure_path=query_path,
-                            components=components,
-                            output_path=pymol_out_path
-                        )
+                            gu.create_pymol_session(
+                                region_id=region_id,
+                                structure_path=query_path,
+                                components=components,
+                                output_path=pymol_out_path
+                            )
 
                         # Create the mapped graph plot
                         figure_out_path = os.path.join(temp_query_dir, f"{out_name}.png")
@@ -325,7 +327,7 @@ def execute_predstrp(
                         )
 
                     # Delete the fragment directory
-                    # shutil.rmtree(fragment_dir)
+                    shutil.rmtree(fragment_dir)
 
                 else:
                     rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"

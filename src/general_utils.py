@@ -1,6 +1,5 @@
 from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
-from pymol import cmd as pcmd
 from datetime import datetime
 from Bio.PDB import Select
 import seaborn as sns
@@ -348,7 +347,7 @@ def create_pymol_session(region_id, structure_path, components, output_path):
     """
     Creates a PyMOL session that the repeat components are highlighted on the associated structure
     """
-
+    from pymol import cmd as pcmd
     # Load the structure
     pcmd.load(structure_path, region_id)
 

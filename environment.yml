@@ -134,10 +134,10 @@ dependencies:
   - pycollada=0.7.2=pyhd8ed1ab_0
   - pycparser=2.21=pyhd3eb1b0_0
   - pykerberos=1.2.4=py38hba943f1_3
-  - pymol=2.5.5=py38h9d334bd_0
-  - pymol-bundle=2.5.5=2
-  - pymol-open-source=2.5.0=py38h9174eab_6
-  - pymol-web-examples=2.4=1
+#  - pymol=2.5.5=py38h9d334bd_0
+#  - pymol-bundle=2.5.5=2
+#  - pymol-open-source=2.5.0=py38h9174eab_6
+#  - pymol-web-examples=2.4=1
   - pyopenssl=23.2.0=py38h06a4308_0
   - pyparsing=3.0.9=py38h06a4308_0
   - pyqt=5.15.10=py38h6a678d5_0

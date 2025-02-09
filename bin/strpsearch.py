@@ -56,6 +56,11 @@ def query_file(
                 help="Whether to keep the temporary directory and files"
             )
         ] = cfg.keep_temp,
+        pymol_pse: Annotated[
+            bool, typer.Option(
+                help="Whether to create and output pymol session files"
+            )
+        ] = cfg.pymol_pse,
         max_eval: Annotated[
             float, typer.Option(
                 help="Maximum E-value of the hits to prefilter"
@@ -70,13 +75,11 @@ def query_file(
     """
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
-
-    # if os.path.exists(out_dir):
-    #     rprint("[bold red]Output directory already exists[/bold red]\n")
-    #     sys.exit()
-    # else:
-    #     os.makedirs(out_dir)
-    os.makedirs(out_dir, exist_ok = True)
+    if os.path.exists(out_dir):
+        rprint("[bold red]Output directory already exists[/bold red]\n")
+        sys.exit()
+    else:
+        os.makedirs(out_dir)
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")
@@ -110,8 +113,9 @@ def query_file(
         out_dir=out_dir,
         temp_dir=temp_dir,
         keep_temp=keep_temp,
+        pymol_pse=pymol_pse,
         max_eval_p=max_eval,
-        min_height_p=min_height
+        min_height_p=min_height,
     )
 
 
@@ -142,6 +146,11 @@ def download_pdb(
                 help="Whether to keep the temporary directory and files"
             )
         ] = cfg.keep_temp,
+        pymol_pse: Annotated[
+            bool, typer.Option(
+                help="Whether to create and output pymol session files"
+            )
+        ] = cfg.pymol_pse,
         max_eval: Annotated[
             float, typer.Option(
                 help="Maximum E-value of the hits to prefilter"
@@ -157,12 +166,11 @@ def download_pdb(
     Download and query a structure from PDB by providing the PDB ID and the specific Chain of interest.
     """
 
-    # if os.path.exists(out_dir):
-    #     rprint("[bold red]Output directory already exists[/bold red]\n")
-    #     sys.exit()
-    # else:
-    #     os.makedirs(out_dir)
-    os.makedirs(out_dir, exist_ok=True)
+    if os.path.exists(out_dir):
+        rprint("[bold red]Output directory already exists[/bold red]\n")
+        sys.exit()
+    else:
+        os.makedirs(out_dir)
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")
@@ -192,8 +200,9 @@ def download_pdb(
         out_dir=out_dir,
         temp_dir=temp_dir,
         keep_temp=keep_temp,
+        pymol_pse=pymol_pse,
         max_eval_p=max_eval,
-        min_height_p=min_height
+        min_height_p=min_height,
     )
 
 
@@ -224,6 +233,11 @@ def download_model(
                 help="Whether to keep the temporary directory and files"
             )
         ] = cfg.keep_temp,
+        pymol_pse: Annotated[
+            bool, typer.Option(
+                help="Whether to create and output pymol session files"
+            )
+        ] = cfg.pymol_pse,
         max_eval: Annotated[
             float, typer.Option(
                 help="Maximum E-value of the hits to prefilter"
@@ -239,12 +253,11 @@ def download_model(
     Download and query an AlphaFold model by providing the UniProt ID and the AlphaFold version of interest.
     """
 
-    # if os.path.exists(out_dir):
-    #     rprint("[bold red]Output directory already exists[/bold red]\n")
-    #     sys.exit()
-    # else:
-    #     os.makedirs(out_dir)
-    os.makedirs(out_dir, exist_ok=True)
+    if os.path.exists(out_dir):
+        rprint("[bold red]Output directory already exists[/bold red]\n")
+        sys.exit()
+    else:
+        os.makedirs(out_dir)
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")
@@ -274,8 +287,9 @@ def download_model(
         out_dir=out_dir,
         temp_dir=temp_dir,
         keep_temp=keep_temp,
+        pymol_pse=pymol_pse,
         max_eval_p=max_eval,
-        min_height_p=min_height
+        min_height_p=min_height,
     )
 
 

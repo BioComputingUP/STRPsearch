@@ -1,4 +1,4 @@
-from Bio.PDB import MMCIFParser, PDBParser, PDBIO, PDBList, Select
+from Bio.PDB import MMCIFParser, PDBParser, PDBIO, Select
 from . import general_utils as gu
 from rich import print as rprint
 import mimetypes
@@ -62,30 +62,36 @@ def extract_chains(input_file, chain, out_dir):
 
 def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
     """
-    Downloads the PDB structure of a given PDB ID
-    Extracts and saves a given chain at a given output dir
-    Return the success status
+    Downloads the PDB structure of a given PDB ID.
+    Extracts and saves a given chain at the specified output directory.
+    Returns the success status.
     """
+    # Store pdb_id in both lowercase and uppercase forms.
+    # RCSB URLs require the PDB code in uppercase.
+    pdb_id_lower = pdb_id.lower()
+    pdb_id_upper = pdb_id.upper()
 
-    pdb_id = pdb_id.lower()
-
-    # Instantiate essential modules
-    pdbl = PDBList()
-
-    # Download the PDB structure
+    # Create a temporary directory for downloaded structures
     temp_structure_dir = os.path.join(temp_dir, "downloaded_structures")
     os.makedirs(temp_structure_dir, exist_ok=True)
-    pdbl.retrieve_pdb_file(pdb_id, pdir=temp_structure_dir, file_format="mmCif")
-    temp_structure_path = os.path.join(temp_structure_dir, f"{pdb_id}.cif")
-    # Check if the download was successful
-    if not os.path.exists(temp_structure_path):
+
+    # Construct the URL for the mmCIF file
+    url = f"https://files.rcsb.org/download/{pdb_id_upper}.cif"
+    temp_structure_path = os.path.join(temp_structure_dir, f"{pdb_id_lower}.cif")
+
+    # Download the structure using requests
+    response = requests.get(url)
+    if response.status_code != 200:
         rprint(f"[bold][{gu.time()}][/bold] [bold red]"
-               f"Failed to download PDB structure {pdb_id}")
+               f"Failed to download PDB structure {pdb_id_lower}")
         return False
     else:
+        with open(temp_structure_path, "wb") as f:
+            f.write(response.content)
         rprint(f"[bold][{gu.time()}][/bold] [bold]"
-               f"PDB structure {pdb_id} was downloaded successfully")
+               f"PDB structure {pdb_id_lower} was downloaded successfully")
 
+    # Extract the desired chain(s) using your existing function
     success = extract_chains(
         input_file=temp_structure_path,
         chain=chain,
