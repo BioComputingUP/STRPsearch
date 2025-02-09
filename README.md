@@ -118,6 +118,7 @@ To generate and output PyMOL sessions using the --pymol-pse option, you must hav
 ```
 conda install -c conda-forge -c schrodinger pymol-bundle=2.6
 conda install -c conda-forge pymol-open-source
+```
 
 ## Examples
 
