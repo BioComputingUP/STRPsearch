@@ -7,67 +7,92 @@ import os
 
 
 class ChainSelector(Select):
+    """
+    Custom selector class to filter and save specific chains from a structure.
+    """
 
     def __init__(self, target_chain):
         self.target_chain = target_chain
 
     def accept_chain(self, chain):
-        if chain.get_id() == self.target_chain and chain.get_parent().id == 0:
-            return True
+        """
+        Accept only the target chain for saving.
+        """
+        return chain.get_id() == self.target_chain and chain.get_parent().id == 0
 
 
 def extract_chains(input_file, chain, out_dir):
+    """
+    Extracts specific chains from a PDB/mmCIF file and saves them as separate PDB files.
+
+    Args:
+        input_file (str): Path to the input structure file (PDB/mmCIF format).
+        chain (str): Chain ID to extract. Use "all" to extract all chains.
+        out_dir (str): Directory to save the extracted chain files.
+
+    Returns:
+        bool: True if extraction is successful, False otherwise.
+    """
     filename = os.path.basename(input_file)[:-4]
 
+    # Determine the file type (PDB or mmCIF) using MIME type
     mime_type, encoding = mimetypes.guess_type(input_file)
     if mime_type:
         if "pdb" in mime_type:
             pdb_parser = PDBParser(QUIET=True)
-            # Parse the structure from the PDB file
             structure = pdb_parser.get_structure(filename, input_file)
         elif "cif" in mime_type:
-            # Instantiate essential modules
             cif_parser = MMCIFParser(QUIET=True)
-            # Parse the structure from the PDB file
             structure = cif_parser.get_structure(filename, input_file)
         else:
-            rprint(f"[bold][{gu.time()}][bold] [bold red]"
+            rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                    "Only PDB / mmCIF format is accepted for query files\n")
-            # logging.error("Only PDB / mmCIF format is accepted for query files")
             return False
     else:
-        rprint(f"[bold][{gu.time()}][bold] [bold red]"
+        rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                f"The query file format is ambiguous for query {filename}\n")
-        # logging.error(f"The query file format is ambiguous for query {query_name}")
         return False
 
+    # Extract the first model and available chains
     structure_model = structure[0]
-    chain_list = []
+    available_chains = {c.id for c in structure_model}
+
+    # Handle chain selection
     if chain == "all":
-        for chain in structure_model:
-            chain_list.append(chain.id)
+        chain_list = list(available_chains)
     else:
         chain = chain.upper()
-        chain_list.append(chain)
+        if chain not in available_chains:
+            rprint(f"[bold][{gu.time()}][/bold] [bold red]"
+                   f"Chain '{chain}' not found in the structure. Available chains: {', '.join(sorted(available_chains))}\n")
+            return False
+        chain_list = [chain]
 
-    for chain in chain_list:
-        # Create a new structure with only the specified chain
-        selector = ChainSelector(chain)
+    # Save each selected chain as a separate PDB file
+    for c in chain_list:
+        selector = ChainSelector(c)
         io = PDBIO()
         io.set_structure(structure)
-        output_path = os.path.join(out_dir, f"{filename}_{chain}.pdb")
+        output_path = os.path.join(out_dir, f"{filename}_{c}.pdb")
         io.save(output_path, select=selector)
+
     return True
 
 
 def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
     """
-    Downloads the PDB structure of a given PDB ID.
-    Extracts and saves a given chain at the specified output directory.
-    Returns the success status.
+    Downloads the PDB structure of a given PDB ID and extracts the specified chain(s).
+
+    Args:
+        pdb_id (str): PDB ID of the structure to download.
+        out_dir (str): Directory to save the extracted chain files.
+        temp_dir (str): Temporary directory for downloaded files.
+        chain (str, optional): Chain ID to extract. Use "all" to extract all chains.
+
+    Returns:
+        bool: True if the download and extraction are successful, False otherwise.
     """
-    # Store pdb_id in both lowercase and uppercase forms.
-    # RCSB URLs require the PDB code in uppercase.
+    # Convert PDB ID to lowercase and uppercase for URL compatibility
     pdb_id_lower = pdb_id.lower()
     pdb_id_upper = pdb_id.upper()
 
@@ -91,7 +116,7 @@ def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
         rprint(f"[bold][{gu.time()}][/bold] [bold]"
                f"PDB structure {pdb_id_lower} was downloaded successfully")
 
-    # Extract the desired chain(s) using your existing function
+    # Extract the desired chain(s) using the extract_chains function
     success = extract_chains(
         input_file=temp_structure_path,
         chain=chain,
@@ -103,18 +128,27 @@ def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
 
 def download_alphafold_structure(uniprot_id, alphafold_version, out_dir):
     """
-    Downloads the AlphaFold structure of a given UniProt ID
-    Return the success status
-    """
+    Downloads the AlphaFold structure of a given UniProt ID.
 
+    Args:
+        uniprot_id (str): UniProt ID of the structure to download.
+        alphafold_version (str): Version of the AlphaFold model.
+        out_dir (str): Directory to save the downloaded structure.
+
+    Returns:
+        bool: True if the download is successful, False otherwise.
+    """
+    # Convert UniProt ID to uppercase for URL compatibility
     uniprot_id = uniprot_id.upper()
 
+    # Construct the URL for the AlphaFold model
     url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v{alphafold_version}.pdb"
     rprint(f"[bold][{gu.time()}][/bold] [bold]"
            f"Downloading AlphaFold-predicted model of {uniprot_id}\n")
+
+    # Download the structure using requests
     response = requests.get(url)
-    # Check if the request was successful (status code 200)
-    output_path = os.path.join(out_dir, f"AF-{uniprot_id}-F1-model_v{alphafold_version}_A.pdb")
+    output_path = os.path.join(out_dir, f"{uniprot_id}_A.pdb")
     if response.status_code == 200:
         with open(output_path, "wb") as file:
             file.write(response.content)
