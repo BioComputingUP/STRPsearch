@@ -44,6 +44,8 @@ def extract_chains(input_file, chain, out_dir):
         elif "cif" in mime_type:
             cif_parser = MMCIFParser(QUIET=True)
             structure = cif_parser.get_structure(filename, input_file)
+
+
         else:
             rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                    "Only PDB / mmCIF format is accepted for query files\n")
@@ -55,6 +57,7 @@ def extract_chains(input_file, chain, out_dir):
 
     # Extract the first model and available chains
     structure_model = structure[0]
+
     available_chains = {c.id for c in structure_model}
 
     # Handle chain selection
@@ -148,7 +151,7 @@ def download_alphafold_structure(uniprot_id, alphafold_version, out_dir):
 
     # Download the structure using requests
     response = requests.get(url)
-    output_path = os.path.join(out_dir, f"{uniprot_id}_A.pdb")
+    output_path = os.path.join(out_dir, f"AF-{uniprot_id}-F1-model_v{alphafold_version}_A.pdb")
     if response.status_code == 200:
         with open(output_path, "wb") as file:
             file.write(response.content)

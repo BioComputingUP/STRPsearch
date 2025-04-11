@@ -16,7 +16,7 @@ from src import config as cfg
 app = typer.Typer(pretty_exceptions_enable=False, add_completion=False)
 
 # Application version
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 @app.command()
 def version():
