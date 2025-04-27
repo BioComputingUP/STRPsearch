@@ -4,6 +4,7 @@ from rich import print as rprint
 import mimetypes
 import requests
 import os
+import gemmi
 
 
 class ChainSelector(Select):
@@ -23,7 +24,7 @@ class ChainSelector(Select):
 
 def extract_chains(input_file, chain, out_dir):
     """
-    Extracts specific chains from a PDB/mmCIF file and saves them as separate PDB files.
+    Extracts specific chains from a PDB/mmCIF file and saves them as separate PDB or CIF files.
 
     Args:
         input_file (str): Path to the input structure file (PDB/mmCIF format).
@@ -34,6 +35,13 @@ def extract_chains(input_file, chain, out_dir):
         bool: True if extraction is successful, False otherwise.
     """
     filename = os.path.basename(input_file)[:-4]
+    doc = gemmi.cif.read_file(input_file)
+    block = doc.sole_block()
+
+    # Load structure model
+    structure = gemmi.make_structure_from_block(block)
+    model = structure[0]  # First model
+    available_chains = {ch.name for ch in model}
 
     # Determine the file type (PDB or mmCIF) using MIME type
     mime_type, encoding = mimetypes.guess_type(input_file)
@@ -44,8 +52,6 @@ def extract_chains(input_file, chain, out_dir):
         elif "cif" in mime_type:
             cif_parser = MMCIFParser(QUIET=True)
             structure = cif_parser.get_structure(filename, input_file)
-
-
         else:
             rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                    "Only PDB / mmCIF format is accepted for query files\n")
@@ -54,11 +60,6 @@ def extract_chains(input_file, chain, out_dir):
         rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                f"The query file format is ambiguous for query {filename}\n")
         return False
-
-    # Extract the first model and available chains
-    structure_model = structure[0]
-
-    available_chains = {c.id for c in structure_model}
 
     # Handle chain selection
     if chain == "all":
@@ -71,13 +72,16 @@ def extract_chains(input_file, chain, out_dir):
             return False
         chain_list = [chain]
 
-    # Save each selected chain as a separate PDB file
-    for c in chain_list:
-        selector = ChainSelector(c)
-        io = PDBIO()
-        io.set_structure(structure)
-        output_path = os.path.join(out_dir, f"{filename}_{c}.pdb")
-        io.save(output_path, select=selector)
+    # Save each selected chain as a separate CIF file
+    for ch_id in chain_list:
+        new_structure = gemmi.Structure()
+        new_model = gemmi.Model(1)
+        target_chain = model[ch_id]
+        new_model.add_chain(target_chain)
+        new_structure.add_model(new_model)
+
+        output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
+        new_structure.make_mmcif_document().write_file(output_path)
 
     return True
 
@@ -145,13 +149,13 @@ def download_alphafold_structure(uniprot_id, alphafold_version, out_dir):
     uniprot_id = uniprot_id.upper()
 
     # Construct the URL for the AlphaFold model
-    url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v{alphafold_version}.pdb"
+    url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v{alphafold_version}.cif"
     rprint(f"[bold][{gu.time()}][/bold] [bold]"
            f"Downloading AlphaFold-predicted model of {uniprot_id}\n")
 
     # Download the structure using requests
     response = requests.get(url)
-    output_path = os.path.join(out_dir, f"AF-{uniprot_id}-F1-model_v{alphafold_version}_A.pdb")
+    output_path = os.path.join(out_dir, f"AF-{uniprot_id}-F1-model_v{alphafold_version}_A.cif")
     if response.status_code == 200:
         with open(output_path, "wb") as file:
             file.write(response.content)

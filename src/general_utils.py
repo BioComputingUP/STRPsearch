@@ -6,6 +6,8 @@ import seaborn as sns
 import numpy as np
 import json
 import os
+import gemmi
+from gemmi import cif
 
 
 def get_res_index(res_num: str, chain_residues: list):
@@ -16,11 +18,14 @@ def get_res_index(res_num: str, chain_residues: list):
     # Loops through the residues of a given list of residues
     # Finds the index of the specified residue number in the list
     # (Not always the index and the residue number are the same e.g. chimeric proteins)
-    res_index = [i for i, chain_res in enumerate(chain_residues) if str(chain_res.id[1]) == str(res_num)]
+    res_index = [i for i, chain_res in enumerate(chain_residues) if str(chain_res.seqid.num) == str(res_num)]
     return res_index[0]
 
 
 def find_largest_smaller_number(res_num: int, chain_residues: list):
+    """
+    Finds the largest residue number in the chain that is smaller than or equal to the given residue number.
+    """
     smaller_numbers = [int(chain_res.id[1]) for chain_res in chain_residues if int(chain_res.id[1]) <= res_num]
     largest_smaller_number = max(smaller_numbers)
     return largest_smaller_number
@@ -53,7 +58,7 @@ def get_res_frames(res_range, length, step):
         # Slice the range by indices and save it as frame
         # The end of each frame is defined as the start + the defined length of the frame
         frame = res_range[start:start + length]
-        # Do it until the length of the frames fall no shorter that 75% of the defined length
+        # Do it until the length of the frames fall no shorter than 75% of the defined length
         if len(frame) >= round(length * 0.75):
             # Add the frame to the list of fragment frames
             frames.append(frame)
@@ -78,6 +83,38 @@ def get_structure(res_range, chain_letter, structure, out_path, io_handler):
     # Create a PDBIO object, set the structure, and save the selected residues to the output path
     io_handler.set_structure(structure)
     io_handler.save(out_path, ResSelect())
+
+
+def get_structure_cif(res_range, chain_id, structure: gemmi.Structure, out_path: str):
+    """
+    Trims and saves a .cif structure using gemmi.
+    res_range: list of integers (residue numbers)
+    """
+    model = structure[0]
+    original_chain = model[chain_id]
+
+    # Create a new structure with the selected residues
+    new_structure = gemmi.Structure()
+    new_structure.name = structure.name
+    new_model = gemmi.Model('1')
+    new_chain = gemmi.Chain(chain_id)
+
+    for res in original_chain:
+        if res.seqid.num in res_range:
+            new_chain.add_residue(res.clone())
+
+    new_model.add_chain(new_chain)
+    new_structure.add_model(new_model)
+
+    # Convert the new structure into a CIF block
+    cif_block = new_structure.make_mmcif_block()
+
+    # Convert the CIF block to a string
+    cif_string = cif_block.as_string()
+
+    # Write the CIF string to the output file
+    with open(out_path, 'w') as cif_file:
+        cif_file.write(cif_string)
 
 
 def calculate_ranges(peak_residue_nums, distance, max_length, flexibility):
@@ -320,6 +357,7 @@ def smooth_graph(y, target_avg_len, window_p):
     """
     Smooths a graph data (heights)
     """
+    y = np.array(y)
 
     # Define the window size based the provided parameters
     window_size = round(target_avg_len * window_p)
@@ -328,6 +366,10 @@ def smooth_graph(y, target_avg_len, window_p):
 
     poly_order = 0
     # Smooth the graph by savgol_filter module
+    if window_size > len(y):
+        window_size = len(y) if len(y) % 2 == 1 else len(y) - 1
+        if window_size < 3:
+            return y 
     y = savgol_filter(y, window_size, poly_order)
 
     return y

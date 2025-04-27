@@ -4,6 +4,8 @@ foldseek_exe_path = "foldseek"
 
 tmalign_exe_path = "TMalign"
 
+usalign_exe_path = "USalign"
+
 temp_dir = "/tmp"
 
 chain = "all"
