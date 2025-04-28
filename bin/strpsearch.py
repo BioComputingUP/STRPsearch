@@ -4,6 +4,8 @@ import tempfile
 import typer
 from rich import print as rprint
 from typing_extensions import Annotated
+import mimetypes
+
 
 # Add parent directory to sys.path to allow importing from src
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -110,9 +112,21 @@ def query_file(
     if os.path.exists(query_dir):
         for f in os.listdir(query_dir):
             os.remove(os.path.join(query_dir, f))
-
+    mime_type, encoding = mimetypes.guess_type(input_file)
+    if mime_type:
+        if "pdb" in mime_type:
+            pdb_id = ds.extract_structure_and_chains(input_file)[0]
+            success= ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+            
+        elif "cif" in mime_type:
     # Extract chains from the input file
-    success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir)
+            success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir)
+        else:
+            rprint(f"[bold red]Only PDB / mmCIF format is accepted for query files[bold red]\n")
+            return False
+    else:
+        rprint(f"[bold red]The query file format is ambiguous for query {input_file}[bold red]\n")
+        return False
     if not success:
         sys.exit("Chain extraction failed.")
 

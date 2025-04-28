@@ -114,8 +114,8 @@ def execute_predstrp(
 
     # Parse Foldseek results
     found_hit, target_df = au.find_target(output_file=fs_output, max_eval=max_eval_p)
-    print("The target hits obtained from Foldseek:\n", target_df)
 
+    print(target_df)
     # Process hits if found
     if found_hit:
         temp_query_dir_list = []
@@ -223,27 +223,194 @@ def execute_predstrp(
                 # Map and save repeat regions
                 regions_dict = gu.parse_regions(query_name, predicted_unit_list, max_insertion_p)
                 if regions_dict:
-                    rprint(f"[bold][{gu.time()}][/bold] [bold green]"
-                           f"{len(regions_dict)} potential repeat regions found with hit {idx + 1}/{len(target_df)}")
-                    # Save regions and generate outputs
-                    # (Details omitted for brevity)
+                    if len(regions_dict) > 1:
+                        rprint(f"[bold][{gu.time()}][/bold] [bold green]"
+                               f"{len(regions_dict)} potential repeat regions were found with hit "
+                               f"{idx + 1}/{len(target_df)}:")
+                    else:
+                        rprint(f"[bold][{gu.time()}][/bold] [bold green]"
+                               f"1 potential repeat region was found with hit "
+                               f"{idx + 1}/{len(target_df)}:")
+
+                    for idx, region_id in enumerate(list(regions_dict.keys())):
+                        rprint(f"[bold blue]"
+                               f"Region {idx + 1}: {region_id}")
+
+                    # Create a directory with the name of the query at the designated temporary directory
+                    temp_query_dir = os.path.join(temp_dir, f"{query_name}")
+                    os.makedirs(temp_query_dir, exist_ok=True)
+                    temp_query_dir_list.append(temp_query_dir)
+
+                    # Loop the through the regions
+                    for region_id, components in regions_dict.items():
+                        start_res = components["units"][0][0]
+                        end_res = components["units"][-1][1]
+
+                        # Because the end residue of each repeat region is always estimated
+                        # Check if it actually exists on the query chain and not missing
+                        # If missing (index error), find the largest smaller residue number before (error handling)
+                        try:
+                            gu.get_res_index(end_res, qchain_residues)
+                        except IndexError:
+                            end_res = gu.find_largest_smaller_number(end_res, qchain_residues)
+
+                        # Define an output name
+                        out_name = f"{region_id}_{ct}_{e_val}"
+
+                        region_out_path = os.path.join(temp_query_dir, f"{out_name}.pdb")
+
+                        # Extract and save the structure of the region
+                        region_range = gu.get_chain_range(
+                            start=start_res,
+                            end=end_res,
+                            chain_residues=qchain_residues
+                        )
+
+                        gu.get_structure_cif(
+                            res_range=region_range,
+                            chain_id=qchain_letter,
+                            structure=qstructure,
+                            out_path=region_out_path,
+                        )
+
+                        # Create and save the PyMOL session of the repeat region highlighted by the integral components
+                        if pymol_pse:
+                            pymol_out_path = os.path.join(temp_query_dir, f"{out_name}.pse")
+
+                            gu.create_pymol_session(
+                                region_id=region_id,
+                                structure_path=query_path,
+                                components=components,
+                                output_path=pymol_out_path
+                            )
+
+                        # Create the mapped graph plot
+                        figure_out_path = os.path.join(temp_query_dir, f"{out_name}.png")
+
+                        gu.plot_tmscore_graph(
+                            x=x,
+                            y=y,
+                            region_components=components,
+                            out_path=figure_out_path
+                        )
+
+                        # Create the JSON file
+                        json_out_path = os.path.join(temp_query_dir, f"{out_name}.json")
+
+                        gu.make_json(
+                            structure_id=query_name,
+                            chain_id=qchain_letter,
+                            ct=ct,
+                            region_id=region_id,
+                            components=components,
+                            out_path=json_out_path,
+                        )
+
+                    # Delete the fragment directory
+                    shutil.rmtree(fragment_dir)
+
                 else:
                     rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
-                           f"No potential repeat region found with hit {idx + 1}/{len(target_df)}\n")
-
-                # Clean up temporary fragment directory
-                shutil.rmtree(fragment_dir)
-
-            except Exception as e:
+                           f"No potential repeat region was found with hit "
+                           f"{idx + 1}/{len(target_df)}\n")
+            except:
                 error_count += 1
                 traceback.print_exc()
                 logging.error(traceback.format_exc())
 
-        # Finalize results and clean up
-        # (Details omitted for brevity)
+        if temp_query_dir_list:
+            rprint(f"\n[bold][{gu.time()}] "
+                   f"All the hits were processed\n")
 
+            # Transfer the files from temporary directory to the final query output directory
+            rprint(f"[bold]"
+                   f"[{gu.time()}] "
+                   f"Transferring the final results to the output directory ...\n")
+
+        # Loop the output directories in the temporary directory
+        for temp_query_dir in temp_query_dir_list:
+            try:
+                query_name = os.path.basename(temp_query_dir)
+                # Create a dict to save certain attributes of the mapped regions
+                # Loop through the outputs in the temporary directory and extract attributes
+                filename_dict = {"query": [], "q_start": [], "q_end": [], "e_value": []}
+                for filename in os.listdir(temp_query_dir):
+                    if filename.endswith(".pdb"):
+                        filename_motifs = filename[len(query_name):].split("_")
+                        q_start = int(filename_motifs[1])
+                        q_end = int(filename_motifs[2])
+                        e_value = float(filename_motifs[-1].strip(".pdb"))
+                        filename_dict["query"].append(query_name)
+                        filename_dict["q_start"].append(q_start)
+                        filename_dict["q_end"].append(q_end)
+                        filename_dict["e_value"].append(e_value)
+
+                filename_df = pd.DataFrame(filename_dict)
+                # Filter the overlapping regions
+                filtered_df = au.filter_overlap(filename_df)
+
+                src_region_fps_dict = {}
+                for row_idx in range(len(filtered_df)):
+                    region_num = str(row_idx + 1)
+                    row = filtered_df.iloc[row_idx]
+                    query_name = row["query"]
+                    q_start = row["q_start"]
+                    q_end = row["q_end"]
+                    basename = f"{query_name}_{q_start}_{q_end}"
+                    for filename in os.listdir(temp_query_dir):
+                        if basename in filename:
+                            filepath = os.path.join(temp_query_dir, filename)
+                            if region_num in src_region_fps_dict.keys():
+                                src_region_fps_dict[region_num].append(filepath)
+                            else:
+                                src_region_fps_dict[region_num] = [filepath]
+
+                # Get the name of the current query directory
+                dir_name = os.path.basename(temp_query_dir)
+                # For each query, define the path of the final output directory of that query
+                out_query_dir = os.path.join(
+                    out_dir,
+                    f"{'_'.join(dir_name.split('_')[:-1])}_results",
+                    f"chain_{dir_name.split('_')[-1]}"
+                )
+                # Create the final query output directory
+                os.makedirs(out_query_dir, exist_ok=True)
+                # Convert the dict to pandas df
+
+                for region_num, filepaths in src_region_fps_dict.items():
+                    out_region_dir = os.path.join(out_query_dir, f"region_{region_num}")
+                    os.makedirs(out_region_dir, exist_ok=True)
+                    for filepath in filepaths:
+                        extension = os.path.basename(filepath).split(".")[-1]
+                        dst_name = "_".join(os.path.basename(filepath).split("_")[:-2]) + "." + extension
+                        dst_path = os.path.join(out_region_dir, dst_name)
+                        shutil.copy(filepath, dst_path)
+
+            except:
+                error_count += 1
+                traceback.print_exc()
+                logging.error(traceback.format_exc())
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        time_stamp_path = os.path.join(out_dir, "time.txt")
+        with open(time_stamp_path, "w") as fp:
+            fp.write(str(elapsed_time))
+
+        rprint(f"[bold][{gu.time()}] "
+               f"Task finished with {error_count} errors")
+
+        # If keep_temp file is set to False, delete the temporary directory
+        if not keep_temp:
+            shutil.rmtree(temp_dir)
+
+    # If no hit was found, remove the created temp and output directories
     else:
-        # Handle case where no hits were found
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        time_stamp_path = os.path.join(out_dir, "time.txt")
+        with open(time_stamp_path, "w") as fp:
+            fp.write(str(elapsed_time))
         rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
-               f"No hit found below the specified maximum E-value of {max_eval_p}")
+               f"No hit was found below the specified maximum E-value of {max_eval_p}[/bold yellow]")
         shutil.rmtree(temp_dir)

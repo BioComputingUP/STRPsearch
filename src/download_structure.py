@@ -21,6 +21,37 @@ class ChainSelector(Select):
         """
         return chain.get_id() == self.target_chain and chain.get_parent().id == 0
 
+def extract_structure_and_chains(pdb_file):
+    """
+    Extracts the PDB ID (structure ID) and chain IDs from a PDB file.
+
+    Args:
+        pdb_file (str): Path to the PDB file.
+
+    Returns:
+        tuple: A tuple containing the PDB ID (str) and a list of chain IDs (list of str).
+    """
+    # Read the PDB ID from the HEADER line in the file
+    pdb_id = None
+    with open(pdb_file, 'r') as file:
+        for line in file:
+            if line.startswith("HEADER"):
+                pdb_id = line[62:66].strip().upper()
+                break
+
+    if not pdb_id:
+        raise ValueError("PDB ID could not be extracted from the file.")
+
+    # Initialize the PDB parser
+    parser = PDBParser(QUIET=True)
+    
+    # Parse the structure
+    structure = parser.get_structure(pdb_id, pdb_file)
+    
+    # Extract the chain IDs
+    chain_ids = [chain.id for chain in structure.get_chains()]
+    
+    return pdb_id, chain_ids
 
 def extract_chains(input_file, chain, out_dir):
     """
