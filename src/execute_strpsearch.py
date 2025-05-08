@@ -1,5 +1,5 @@
 import json
-from Bio.PDB import MMCIFParser, PDBIO, is_aa, PDBParser
+from Bio.PDB import MMCIFParser, PDBIO, MMCIFIO, is_aa, PDBParser
 from scipy.signal import find_peaks
 from rich import print as rprint
 from . import alignment_utils as au
@@ -29,6 +29,7 @@ flexibility_p = 1 - distance_p
 cif_parser = MMCIFParser(QUIET=True)
 pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
+io_handler_cif = MMCIFIO()
 
 # Specify paths to ground-truth libraries
 tul_db = "data/databases/tul_foldseek_db/db"
@@ -99,6 +100,8 @@ def execute_predstrp(
     rprint(f"[bold blue]Maximum E-value: {max_eval_p}")
     rprint(f"[bold blue]Minimum height: {min_height_p}\n")
 
+    
+    # gu.segment_cif_directory(structure_dir,structure_dir)
     # Specify the path to save Foldseek search output
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 
@@ -155,6 +158,7 @@ def execute_predstrp(
                 # Load query structure and chain
                 query_path = os.path.join(structure_dir, f"{query_name}.cif")
                 qstructure = gemmi.read_structure(query_path)
+                lstructure=pdb_parser.get_structure(query_name, query_path)
                 qmodel = qstructure[0]
                 qchain_letter = qmodel[0].name
                 qchain = qmodel[qchain_letter]
@@ -257,7 +261,7 @@ def execute_predstrp(
                         # Define an output name
                         out_name = f"{region_id}_{ct}_{e_val}"
 
-                        region_out_path = os.path.join(temp_query_dir, f"{out_name}.pdb")
+                        region_out_path = os.path.join(temp_query_dir, f"{out_name}.cif")
 
                         # Extract and save the structure of the region
                         region_range = gu.get_chain_range(
@@ -265,7 +269,6 @@ def execute_predstrp(
                             end=end_res,
                             chain_residues=qchain_residues
                         )
-
                         gu.get_structure_cif(
                             res_range=region_range,
                             chain_id=qchain_letter,
@@ -335,11 +338,11 @@ def execute_predstrp(
                 # Loop through the outputs in the temporary directory and extract attributes
                 filename_dict = {"query": [], "q_start": [], "q_end": [], "e_value": []}
                 for filename in os.listdir(temp_query_dir):
-                    if filename.endswith(".pdb"):
+                    if filename.endswith(".cif"):
                         filename_motifs = filename[len(query_name):].split("_")
                         q_start = int(filename_motifs[1])
                         q_end = int(filename_motifs[2])
-                        e_value = float(filename_motifs[-1].strip(".pdb"))
+                        e_value = float(filename_motifs[-1].strip(".cif"))
                         filename_dict["query"].append(query_name)
                         filename_dict["q_start"].append(q_start)
                         filename_dict["q_end"].append(q_end)

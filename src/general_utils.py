@@ -7,7 +7,164 @@ import numpy as np
 import json
 import os
 import gemmi
-from gemmi import cif
+from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
+
+from protein_domain_segmentation import ChainsawCluster
+class ResidueRangeSelect(Select):
+    def __init__(self, chain_id, start_res, end_res):
+        self.chain_id = chain_id
+        self.start_res = start_res
+        self.end_res = end_res
+
+    def accept_chain(self, chain):
+        return chain.id == self.chain_id
+
+    def accept_residue(self, residue):
+        return (
+            residue.get_parent().id == self.chain_id and
+            self.start_res <= residue.id[1] <= self.end_res
+        )
+
+def extract_segment_to_cif(pdb_file, chain_id, start_res, end_res, output_file):
+    parser = PDBParser(QUIET=True)
+    structure = parser.get_structure("structure", pdb_file)
+
+    io = MMCIFIO()
+    io.set_structure(structure)
+    io.save(output_file, select=ResidueRangeSelect(chain_id, start_res, end_res))
+
+def get_chain_id_from_filename(filename):
+    """
+    Extracts the chain ID from a .cif filename in the format 'id_chainid.cif'.
+
+    Args:
+        filename (str): The name of the .cif file (e.g., '1a0t_P.cif').
+
+    Returns:
+        str: The chain ID extracted from the filename.
+    """
+    # Remove the file extension
+    base_name = os.path.splitext(filename)[0]
+    # Split by underscore and return the second part (chain ID)
+    parts = base_name.split("_")
+    if len(parts) > 1:
+        return parts[1]  # Chain ID is the second part
+    else:
+        raise ValueError(f"Filename '{filename}' does not contain a chain ID.")
+
+
+def extract_regions(region_string):
+    """
+    Extracts start and end values from a region string and returns a list of dictionaries.
+
+    Args:
+        region_string (str): Input string representing regions (e.g., "73-482_504-590").
+
+    Returns:
+        list: A list of dictionaries with 'start' and 'end' keys.
+    """
+    regions = region_string.split(",")  # Split the string by '_'
+    result = []
+
+    for region in regions:
+        start, end = map(int, region.split("-"))  # Split each region by '-' and convert to integers
+        result.append({"start": start, "end": end})
+
+    return result
+
+def is_polymer_chain_cif(filepath):
+    """
+    Détermine si un fichier .cif correspond à une chaîne protéique (ou un polymère biologique).
+    Retourne True s'il s'agit d'une chaîne (avec des résidus comme ALA, GLY...), False sinon.
+    """
+    try:
+        with open(filepath, 'r') as file:
+            has_residues = False
+            for line in file:
+                # Cherche les lignes ATOM (et pas HETATM)
+                if line.startswith("ATOM"):
+                    # Vérifie si le résidu appartient à une chaîne classique d'acides aminés
+                    tokens = line.split()
+                    if len(tokens) > 5:
+                        residue = tokens[5]
+                        if residue in {
+                            "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU",
+                            "GLY", "HIS", "ILE", "LEU", "LYS", "MET", "PHE",
+                            "PRO", "SER", "THR", "TRP", "TYR", "VAL"
+                        }:
+                            has_residues = True
+                            break
+            return has_residues
+    except Exception as e:
+        print(f"Erreur : {e}")
+        return False
+
+
+
+def segment_cif_directory(input_dir, output_dir):
+    """
+    Processes a directory of .cif files, applies Chainsaw to predict chopping regions,
+    extracts segments, and deletes temporary .pdb files.
+
+    Args:
+        input_dir (str): Path to the directory containing .cif files.
+        output_dir (str): Path to the directory where output .cif files will be saved.
+    """
+    # os.makedirs(output_dir, exist_ok=True)  # Ensure the output directory exists
+    chainsaw_cluster = ChainsawCluster()  # Initialize ChainsawCluster
+    for cif_file in os.listdir(input_dir):
+        
+        if cif_file.endswith(".cif"):
+            cif_path = os.path.join(input_dir, cif_file)
+            if is_polymer_chain_cif(cif_path):
+                chain_id = get_chain_id_from_filename(cif_file)  # Extract chain ID from filename
+                
+                pdb_file = cif_path.replace(".cif", ".pdb")  # Temporary .pdb file path
+
+                # Convert .cif to .pdb
+                parser = MMCIFParser(QUIET=True)
+                structure = parser.get_structure("structure", cif_path)
+                io = PDBIO()
+                io.set_structure(structure)
+                io.save(pdb_file)
+
+                # Apply Chainsaw to predict chopping regions
+                print(pdb_file)
+                chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
+                print(f"Chainsaw Results for {cif_file}:", chainsaw_result)
+
+                # Extract regions from Chainsaw results
+                regions = extract_regions(chainsaw_result)
+
+                # Extract segments for each region
+                for region in regions:
+                    start = region['start']
+                    end = region['end']
+                    output_cif = os.path.join(
+                        output_dir, f"segment_{os.path.splitext(cif_file)[0]}_{chain_id}_{start}_{end}.cif"
+                    )
+                    extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
+
+                # Delete the temporary .pdb file
+                os.remove(pdb_file)
+
+# Helper function to extract chain ID from filename
+def get_chain_id_from_filename(filename):
+    """
+    Extracts the chain ID from a .cif filename in the format 'id_chainid.cif'.
+
+    Args:
+        filename (str): The name of the .cif file (e.g., '1a0t_P.cif').
+
+    Returns:
+        str: The chain ID extracted from the filename.
+    """
+    base_name = os.path.splitext(filename)[0]
+    parts = base_name.split("_")
+    if len(parts) > 1:
+        return parts[1]  # Chain ID is the second part
+    else:
+        raise ValueError(f"Filename '{filename}' does not contain a chain ID.")
 
 
 def get_res_index(res_num: str, chain_residues: list):
@@ -26,7 +183,7 @@ def find_largest_smaller_number(res_num: int, chain_residues: list):
     """
     Finds the largest residue number in the chain that is smaller than or equal to the given residue number.
     """
-    smaller_numbers = [int(chain_res.id[1]) for chain_res in chain_residues if int(chain_res.id[1]) <= res_num]
+    smaller_numbers = [int(chain_res[1].seqid.num) for chain_res in chain_residues if int(chain_res.id[1]) <= res_num]
     largest_smaller_number = max(smaller_numbers)
     return largest_smaller_number
 

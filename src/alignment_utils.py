@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import os
 from src.tmalign import Tmalign, Usalign
+from Bio.PDB import Select
+
+
 
 
 def search_tul(foldseek_exe_path, query_dir, tul_fs_db, output_file, temp_dir):
@@ -85,12 +88,14 @@ def find_target(output_file, max_eval):
     df['target'] = df['target'].apply(lambda x: '_'.join(x.split('_')[:-2]))
 
     target_list = []
+
     for query in df["query"].unique():
         query_df = df[df["query"] == query]
         lowest_eval_indices = query_df.groupby('t_ct')["e_value"].idxmin()
         lowest_eval_rows = query_df.loc[lowest_eval_indices]
 
         for _, row in lowest_eval_rows.iterrows():
+            print(row["query"])
             target_list.append({
                 "query": row["query"],
                 "target": row["target"],
