@@ -7,4 +7,7 @@ bin/src
 /data/databases/
 data/databases/
 temp3
+temp/
 output
+input
+test
