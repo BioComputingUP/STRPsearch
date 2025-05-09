@@ -114,8 +114,6 @@ def execute_predstrp(
 
     # Parse Foldseek results
     found_hit, target_df = au.find_target(output_file=fs_output, max_eval=max_eval_p)
-
-    print(target_df)
     # Process hits if found
     if found_hit:
         temp_query_dir_list = []
@@ -257,15 +255,16 @@ def execute_predstrp(
                         # Define an output name
                         out_name = f"{region_id}_{ct}_{e_val}"
 
-                        region_out_path = os.path.join(temp_query_dir, f"{out_name}.pdb")
+                        region_out_path = os.path.join(temp_query_dir, f"{out_name}.cif")
 
                         # Extract and save the structure of the region
+                        print(start_res, end_res)
                         region_range = gu.get_chain_range(
                             start=start_res,
                             end=end_res,
                             chain_residues=qchain_residues
                         )
-
+                        # print(region_range)
                         gu.get_structure_cif(
                             res_range=region_range,
                             chain_id=qchain_letter,
@@ -335,11 +334,11 @@ def execute_predstrp(
                 # Loop through the outputs in the temporary directory and extract attributes
                 filename_dict = {"query": [], "q_start": [], "q_end": [], "e_value": []}
                 for filename in os.listdir(temp_query_dir):
-                    if filename.endswith(".pdb"):
+                    if filename.endswith(".cif"):
                         filename_motifs = filename[len(query_name):].split("_")
                         q_start = int(filename_motifs[1])
                         q_end = int(filename_motifs[2])
-                        e_value = float(filename_motifs[-1].strip(".pdb"))
+                        e_value = float(filename_motifs[-1].strip(".cif"))
                         filename_dict["query"].append(query_name)
                         filename_dict["q_start"].append(q_start)
                         filename_dict["q_end"].append(q_end)
