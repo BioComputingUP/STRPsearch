@@ -117,8 +117,6 @@ def execute_predstrp(
 
     # Parse Foldseek results
     found_hit, target_df = au.find_target(output_file=fs_output, max_eval=max_eval_p)
-
-    print(target_df)
     # Process hits if found
     if found_hit:
         temp_query_dir_list = []
@@ -264,6 +262,7 @@ def execute_predstrp(
                         region_out_path = os.path.join(temp_query_dir, f"{out_name}.cif")
 
                         # Extract and save the structure of the region
+                        print(start_res, end_res)
                         region_range = gu.get_chain_range(
                             start=start_res,
                             end=end_res,

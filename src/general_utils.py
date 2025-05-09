@@ -190,14 +190,22 @@ def find_largest_smaller_number(res_num: int, chain_residues: list):
 
 def get_chain_range(start, end, chain_residues: list):
     """
-    Returns the range of subsection in a chain
-    """
+    Returns a list of residue numbers (integers) in the specified range of a gemmi chain.
 
-    # Get the residue indices for the start and end residues on the given list of residues
+    Args:
+        start (int): The starting residue number.
+        end (int): The ending residue number.
+        chain_residues (list): A list of gemmi residues.
+
+    Returns:
+        list: A list of residue numbers (integers) in the specified range.
+    """
+    # Get the residue indices for the start and end residues
     chain_start = get_res_index(start, chain_residues)
     chain_end = get_res_index(end, chain_residues)
-    # Slice and return that range of the residue list (end residue inclusive)
-    chain_range = chain_residues[chain_start:chain_end + 1]
+
+    # Slice the range of residues and extract their residue numbers
+    chain_range = [res.seqid.num for res in chain_residues[chain_start:chain_end + 1]]
     return chain_range
 
 
