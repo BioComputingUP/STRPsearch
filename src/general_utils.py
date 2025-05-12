@@ -181,7 +181,7 @@ def find_largest_smaller_number(res_num: int, chain_residues: list):
     """
     Finds the largest residue number in the chain that is smaller than or equal to the given residue number.
     """
-    smaller_numbers = [int(chain_res[1].seqid.num) for chain_res in chain_residues if int(chain_res.id[1]) <= res_num]
+    smaller_numbers = [int(chain_res.seqid.num) for chain_res in chain_residues if int(chain_res.seqid.num) <= res_num]
     largest_smaller_number = max(smaller_numbers)
     return largest_smaller_number
 
