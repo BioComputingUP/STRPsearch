@@ -95,7 +95,6 @@ def find_target(output_file, max_eval):
         lowest_eval_rows = query_df.loc[lowest_eval_indices]
 
         for _, row in lowest_eval_rows.iterrows():
-            print(row["query"])
             target_list.append({
                 "query": row["query"],
                 "target": row["target"],

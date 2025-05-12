@@ -102,7 +102,6 @@ def extract_chains(input_file, chain, out_dir):
                    f"Chain '{chain}' not found in the structure. Available chains: {', '.join(sorted(available_chains))}\n")
             return False
         chain_list = [chain]
-    print(chain_list)
     # Save each selected chain as a separate CIF file
     for ch_id in chain_list:
         new_structure = gemmi.Structure()

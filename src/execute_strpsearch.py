@@ -262,7 +262,6 @@ def execute_predstrp(
                         region_out_path = os.path.join(temp_query_dir, f"{out_name}.cif")
 
                         # Extract and save the structure of the region
-                        print(start_res, end_res)
                         region_range = gu.get_chain_range(
                             start=start_res,
                             end=end_res,
@@ -328,11 +327,13 @@ def execute_predstrp(
             rprint(f"[bold]"
                    f"[{gu.time()}] "
                    f"Transferring the final results to the output directory ...\n")
+        
 
         # Loop the output directories in the temporary directory
         for temp_query_dir in temp_query_dir_list:
             try:
-                query_name = os.path.basename(temp_query_dir)
+                
+                query_name = "_".join(os.path.basename(temp_query_dir).split("_")[:2])
                 # Create a dict to save certain attributes of the mapped regions
                 # Loop through the outputs in the temporary directory and extract attributes
                 filename_dict = {"query": [], "q_start": [], "q_end": [], "e_value": []}
@@ -372,8 +373,8 @@ def execute_predstrp(
                 # For each query, define the path of the final output directory of that query
                 out_query_dir = os.path.join(
                     out_dir,
-                    f"{'_'.join(dir_name.split('_')[:-1])}_results",
-                    f"chain_{dir_name.split('_')[-1]}"
+                    f"{'_'.join(dir_name.split('_')[:-3])}_results",
+                    f"chain_{dir_name.split('_')[-3]}"
                 )
                 # Create the final query output directory
                 os.makedirs(out_query_dir, exist_ok=True)
