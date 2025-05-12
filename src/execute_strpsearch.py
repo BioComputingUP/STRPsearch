@@ -258,13 +258,11 @@ def execute_predstrp(
                         region_out_path = os.path.join(temp_query_dir, f"{out_name}.cif")
 
                         # Extract and save the structure of the region
-                        print(start_res, end_res)
                         region_range = gu.get_chain_range(
                             start=start_res,
                             end=end_res,
                             chain_residues=qchain_residues
                         )
-                        # print(region_range)
                         gu.get_structure_cif(
                             res_range=region_range,
                             chain_id=qchain_letter,
