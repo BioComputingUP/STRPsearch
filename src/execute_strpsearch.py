@@ -101,7 +101,7 @@ def execute_predstrp(
     rprint(f"[bold blue]Minimum height: {min_height_p}\n")
 
     
-    # gu.segment_cif_directory(structure_dir,structure_dir)
+    gu.segment_cif_directory(structure_dir,structure_dir)
     # Specify the path to save Foldseek search output
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 

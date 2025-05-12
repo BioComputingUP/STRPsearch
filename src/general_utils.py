@@ -127,11 +127,8 @@ def segment_cif_directory(input_dir, output_dir):
                 io = PDBIO()
                 io.set_structure(structure)
                 io.save(pdb_file)
-
                 # Apply Chainsaw to predict chopping regions
-                print(pdb_file)
                 chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
-                print(f"Chainsaw Results for {cif_file}:", chainsaw_result)
 
                 # Extract regions from Chainsaw results
                 regions = extract_regions(chainsaw_result)
@@ -144,6 +141,7 @@ def segment_cif_directory(input_dir, output_dir):
                         output_dir, f"segment_{os.path.splitext(cif_file)[0]}_{chain_id}_{start}_{end}.cif"
                     )
                     extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
+                os.remove(cif_path)  # Remove the original .cif file
 
                 # Delete the temporary .pdb file
                 os.remove(pdb_file)
