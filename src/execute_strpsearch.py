@@ -295,7 +295,7 @@ def execute_predstrp(
                         json_out_path = os.path.join(temp_query_dir, f"{out_name}.json")
 
                         gu.make_json(
-                            structure_id=query_name,
+                            structure_id=query_id,
                             chain_id=qchain_letter,
                             ct=ct,
                             region_id=region_id,
