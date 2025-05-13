@@ -32,5 +32,3 @@ class Tmalign:
         exe_args = [self.exe_path, pdb1, pdb2, "-fast", "-a", "T"]
         # Run process
         return subprocess.run(exe_args, cwd=cwd_path, capture_output=True, encoding='utf-8', timeout=120).stdout
-        # print(output.stdout)
-        # print(ouptut.stderr)
