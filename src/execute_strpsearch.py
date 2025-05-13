@@ -125,9 +125,12 @@ def execute_predstrp(
         for idx in range(len(target_df)):
             try:
                 row = target_df.iloc[idx]
-                query_id = "_".join(row["query"].split("_")[:-1])
-                query_chain = re.search(r"_([^_]+)$", row["query"]).group(1)
+                query_name_path= row["query"]
+                parts= query_name_path.split("_")
+                query_id =parts[0]
+                query_chain = parts[1]
                 query_name = query_id + "_" + query_chain
+                
                 target_name = row["target"]
                 target_chain = target_name[4]
                 e_val = row["e_value"]
@@ -154,7 +157,7 @@ def execute_predstrp(
                 rprint(f"[bold blue]Classification: {target_classi}\n")
 
                 # Load query structure and chain
-                query_path = os.path.join(structure_dir, f"{query_name}.cif")
+                query_path = os.path.join(structure_dir, f"{query_name_path}.cif")
                 qstructure = gemmi.read_structure(query_path)
                 lstructure=pdb_parser.get_structure(query_name, query_path)
                 qmodel = qstructure[0]
@@ -299,7 +302,7 @@ def execute_predstrp(
                         json_out_path = os.path.join(temp_query_dir, f"{out_name}.json")
 
                         gu.make_json(
-                            structure_id=query_id,
+                            structure_id=query_name,
                             chain_id=qchain_letter,
                             ct=ct,
                             region_id=region_id,
@@ -373,8 +376,8 @@ def execute_predstrp(
                 # For each query, define the path of the final output directory of that query
                 out_query_dir = os.path.join(
                     out_dir,
-                    f"{'_'.join(dir_name.split('_')[:-3])}_results",
-                    f"chain_{dir_name.split('_')[-3]}"
+                    f"{'_'.join(dir_name.split('_')[:-1])}_results",
+                    f"chain_{dir_name.split('_')[-1]}"
                 )
                 # Create the final query output directory
                 os.makedirs(out_query_dir, exist_ok=True)

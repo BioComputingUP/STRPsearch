@@ -104,7 +104,7 @@ def is_polymer_chain_cif(filepath):
                             break
             return has_residues
     except Exception as e:
-        print(f"Erreur : {e}")
+        print(f"Error : {e}")
         return False
 
 
@@ -119,7 +119,7 @@ def segment_cif_directory(input_dir, output_dir):
         output_dir (str): Path to the directory where output .cif files will be saved.
     """
     # os.makedirs(output_dir, exist_ok=True)  # Ensure the output directory exists
-    chainsaw_cluster = ChainsawCluster(verbose=False)  # Initialize ChainsawCluster
+    chainsaw_cluster = ChainsawCluster()  # Initialize ChainsawCluster
     for cif_file in os.listdir(input_dir):
         
         if cif_file.endswith(".cif"):

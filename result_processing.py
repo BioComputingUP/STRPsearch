@@ -83,4 +83,4 @@ def process_results(root_folder, output_csv):
     print(f"[✓] Fichier CSV généré : {output_csv}")
 
 
-process_results("/home/yusra/Projects/STRPsearch/output/1a0c", "results_summary.csv")
+process_results("/home/yusra/Projects/STRPsearch/output/chainsaw/1a0c", "results_summary.csv")
