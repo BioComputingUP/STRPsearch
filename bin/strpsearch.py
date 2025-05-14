@@ -76,8 +76,7 @@ def query_file(
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
     if os.path.exists(out_dir):
-        rprint("[bold red]Output directory already exists[/bold red]\n")
-        sys.exit()
+        rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
     else:
         os.makedirs(out_dir)
 
@@ -101,6 +100,12 @@ def query_file(
             rprint("[bold red]'min_height' parameter cannot be smaller than 0 or bigger than 1[/bold red]\n")
             sys.exit()
 
+    # Prepare the output directory structure
+    input_filename = os.path.basename(input_file)
+    parts=input_filename.split('.')
+    input_name =parts[0]
+    print(input_name)
+    out_dir = os.path.join(out_dir, input_name)
     query_dir = os.path.join(out_dir, "query_structures")
     os.makedirs(query_dir, exist_ok=True)
 
@@ -167,10 +172,10 @@ def download_pdb(
     """
 
     if os.path.exists(out_dir):
-        rprint("[bold red]Output directory already exists[/bold red]\n")
-        sys.exit()
+        rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
     else:
         os.makedirs(out_dir)
+
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")

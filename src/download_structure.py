@@ -4,6 +4,8 @@ from rich import print as rprint
 import mimetypes
 import requests
 import os
+import gzip
+import shutil
 
 
 class ChainSelector(Select):
@@ -18,7 +20,15 @@ class ChainSelector(Select):
 
 def extract_chains(input_file, chain, out_dir):
     filename = os.path.basename(input_file)[:-4]
+    decompressed_file = None
+    if input_file.endswith(".gz"):
+        decompressed_file = input_file[:-3]  # Remove the .gz extension
+        with gzip.open(input_file, "rb") as gz_file:
+            with open(decompressed_file, "wb") as out_file:
+                shutil.copyfileobj(gz_file, out_file)
+        input_file = decompressed_file  # Update input_file to the decompressed file
 
+    filename = os.path.basename(input_file)[:-4]
     mime_type, encoding = mimetypes.guess_type(input_file)
     if mime_type:
         if "pdb" in mime_type:
@@ -57,6 +67,9 @@ def extract_chains(input_file, chain, out_dir):
         io.set_structure(structure)
         output_path = os.path.join(out_dir, f"{filename}_{chain}.pdb")
         io.save(output_path, select=selector)
+    if decompressed_file:
+        os.remove(decompressed_file)
+
     return True
 
 

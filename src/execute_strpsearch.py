@@ -25,16 +25,20 @@ threshold_p = cfg.threshold_p
 window_p = cfg.window_p
 flexibility_p = 1 - distance_p
 
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Instantiate essential modules
 cif_parser = MMCIFParser(QUIET=True)
 pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
-# Specify the paths to ground-truth libraries
-tul_db = "data/databases/tul_foldseek_db/db"
-rul_db = "data/databases/rul_structure_db/"
-ontology_df = pd.read_csv("data/ontology.tsv", delimiter="\t")
-# Load the JSON data from the file
-with open("data/ct_tmscore_means.json", 'r') as fp:
+# Specify paths to ground-truth libraries
+tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
+rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
+ontology_path = os.path.join(project_root, "data", "ontology.tsv")
+ontology_df = pd.read_csv(ontology_path, delimiter="\t")
+
+ct_tmscore_path = os.path.join(project_root, "data", "ct_tmscore_means.json")
+# Load classification TM-score data
+with open(ct_tmscore_path, 'r') as fp:
     ct_tmscore_dict = json.load(fp)
 
 
