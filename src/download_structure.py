@@ -1,10 +1,12 @@
-from Bio.PDB import MMCIFParser, PDBParser, PDBIO, Select
+from Bio.PDB import MMCIFParser, PDBParser, Select
 from . import general_utils as gu
 from rich import print as rprint
 import mimetypes
 import requests
 import os
 import gemmi
+import gzip
+import shutil
 
 
 class ChainSelector(Select):
@@ -23,14 +25,23 @@ class ChainSelector(Select):
 
 def extract_structure_and_chains(pdb_file):
     """
-    Extracts the PDB ID (structure ID) and chain IDs from a PDB file.
+    Extracts the PDB ID (structure ID) and chain IDs from a PDB file, including handling .pdb.gz files.
 
     Args:
-        pdb_file (str): Path to the PDB file.
+        pdb_file (str): Path to the PDB file (can be .pdb or .pdb.gz).
 
     Returns:
         tuple: A tuple containing the PDB ID (str) and a list of chain IDs (list of str).
     """
+    # Handle .pdb.gz files
+    decompressed_file = None
+    if pdb_file.endswith(".gz"):
+        decompressed_file = pdb_file[:-3]  # Remove the .gz extension
+        with gzip.open(pdb_file, "rt") as gz_file:  # Open in text mode
+            with open(decompressed_file, "w") as out_file:
+                out_file.write(gz_file.read())
+        pdb_file = decompressed_file  # Update pdb_file to the decompressed file
+
     # Read the PDB ID from the HEADER line in the file
     pdb_id = None
     with open(pdb_file, 'r') as file:
@@ -51,28 +62,45 @@ def extract_structure_and_chains(pdb_file):
     # Extract the chain IDs
     chain_ids = [chain.id for chain in structure.get_chains()]
     
+    # Clean up decompressed file if it was a .pdb.gz file
+    if decompressed_file:
+        os.remove(decompressed_file)
+
     return pdb_id, chain_ids
 
 def extract_chains(input_file, chain, out_dir):
     """
-    Extracts specific chains from a PDB/mmCIF file and saves them as separate PDB or CIF files.
+    Extracts specific chains from a PDB/mmCIF file (including .gz compressed files) 
+    and saves them as separate PDB or CIF files.
 
     Args:
-        input_file (str): Path to the input structure file (PDB/mmCIF format).
+        input_file (str): Path to the input structure file (PDB/mmCIF format, optionally .gz compressed).
         chain (str): Chain ID to extract. Use "all" to extract all chains.
         out_dir (str): Directory to save the extracted chain files.
 
     Returns:
         bool: True if extraction is successful, False otherwise.
     """
-    filename = os.path.basename(input_file)[:-4]
-    doc = gemmi.cif.read_file(input_file)
-    block = doc.sole_block()
+    # Handle .gz compressed files
+    decompressed_file = None
+    if input_file.endswith(".gz"):
+        decompressed_file = input_file[:-3]  # Remove the .gz extension
+        with gzip.open(input_file, "rb") as gz_file:
+            with open(decompressed_file, "wb") as out_file:
+                shutil.copyfileobj(gz_file, out_file)
+        input_file = decompressed_file  # Update input_file to the decompressed file
 
-    # Load structure model
-    structure = gemmi.make_structure_from_block(block)
-    model = structure[0]  # First model
-    available_chains = {ch.name for ch in model}
+    filename = os.path.basename(input_file)[:-4]
+    try:
+        # Load structure model using gemmi
+        doc = gemmi.cif.read_file(input_file)
+        block = doc.sole_block()
+        structure = gemmi.make_structure_from_block(block)
+        model = structure[0]  # First model
+        available_chains = {ch.name for ch in model}
+    except Exception as e:
+        rprint(f"[bold][{gu.time()}][/bold] [bold red]Error reading structure file: {e}[/bold red]")
+        return False
 
     # Determine the file type (PDB or mmCIF) using MIME type
     mime_type, encoding = mimetypes.guess_type(input_file)
@@ -112,6 +140,10 @@ def extract_chains(input_file, chain, out_dir):
 
         output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
         new_structure.make_mmcif_document().write_file(output_path)
+
+    # Clean up decompressed file if it was a .gz file
+    if decompressed_file:
+        os.remove(decompressed_file)
 
     return True
 

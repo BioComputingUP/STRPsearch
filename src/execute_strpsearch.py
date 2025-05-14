@@ -31,13 +31,17 @@ pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
 io_handler_cif = MMCIFIO()
 
-# Specify paths to ground-truth libraries
-tul_db = "data/databases/tul_foldseek_db/db"
-rul_db = "data/databases/rul_structure_db/"
-ontology_df = pd.read_csv("data/ontology.tsv", delimiter="\t")
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Specify paths to ground-truth libraries
+tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
+rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
+ontology_path = os.path.join(project_root, "data", "ontology.tsv")
+ontology_df = pd.read_csv(ontology_path, delimiter="\t")
+
+ct_tmscore_path = os.path.join(project_root, "data", "ct_tmscore_means.json")
 # Load classification TM-score data
-with open("data/ct_tmscore_means.json", 'r') as fp:
+with open(ct_tmscore_path, 'r') as fp:
     ct_tmscore_dict = json.load(fp)
 
 
