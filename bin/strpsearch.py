@@ -132,7 +132,7 @@ def query_file(
 
     # If a specific chain is requested, verify its file exists
     if chain and chain.lower() != "all":
-        chain_file = os.path.join(query_dir, f"{input_name}_{chain}.pdb")
+        chain_file = os.path.join(query_dir, f"{input_name}_{chain}.cif")
         if not os.path.isfile(chain_file):
             rprint(f"[bold red]❌ Chain '{chain}' not found in the structure.[/bold red]")
             rprint(f"[bold red]Make sure the chain ID exists in the input file: {input_file}[/bold red]")
@@ -203,9 +203,9 @@ def download_pdb(
 
     # If a specific chain is requested, verify its file exists
     if chain and chain.lower() != "all":
-        chain_file = os.path.join(query_dir, f"{pdb_id}_{chain}.pdb")
+        chain_file = os.path.join(query_dir, f"{pdb_id}_{chain}.cif")
         if not os.path.isfile(chain_file):
-            rprint(f"[bold red]❌ Chain '{chain}' not found in the structure.[/bold red]")
+            rprint(f"[bold red]❌ Chain '{chain}' not found in the {query_dir}.[/bold red]")
             rprint(f"[bold red]Make sure the chain ID exists in the input Protein: {pdb_id}[/bold red]")
             sys.exit(1)
 
