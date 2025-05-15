@@ -103,7 +103,8 @@ def query_file(
 
     # Prepare the output directory structure
     input_filename = os.path.basename(input_file)
-    input_name = os.path.splitext(input_filename)[0]
+    parts=input_filename.split(".")
+    input_name = parts[0]
     out_dir = os.path.join(out_dir, input_name)
     query_dir = os.path.join(out_dir, "query_structures")
     os.makedirs(query_dir, exist_ok=True)

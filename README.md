@@ -43,7 +43,7 @@ python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
 
 ```
 conda env create -f environment.yml
-conda activate strpsearch_env
+conda activate strpsearch_env_ch_before
 ```
 
 2. Navigate to the main directory of the project and run the software with the following command:
