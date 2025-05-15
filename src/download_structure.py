@@ -81,10 +81,14 @@ def extract_chains(input_file, chain, out_dir):
     Returns:
         bool: True if extraction is successful, False otherwise.
     """
-    # Handle .gz compressed files
     decompressed_file = None
+
+    # Handle .gz and .ent.gz compressed files
     if input_file.endswith(".gz"):
-        decompressed_file = input_file[:-3]  # Remove the .gz extension
+        if input_file.endswith(".ent.gz"):
+            decompressed_file = input_file[:-7] + ".pdb"  # Replace .ent.gz with .pdb
+        else:
+            decompressed_file = input_file[:-3]  # Remove the .gz extension
         with gzip.open(input_file, "rb") as gz_file:
             with open(decompressed_file, "wb") as out_file:
                 shutil.copyfileobj(gz_file, out_file)
@@ -133,7 +137,7 @@ def extract_chains(input_file, chain, out_dir):
     # Save each selected chain as a separate CIF file
     for ch_id in chain_list:
         new_structure = gemmi.Structure()
-        new_model = gemmi.Model(1)
+        new_model = gemmi.Model('1')
         target_chain = model[ch_id]
         new_model.add_chain(target_chain)
         new_structure.add_model(new_model)
