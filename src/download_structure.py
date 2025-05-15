@@ -81,9 +81,8 @@ def extract_chains(input_file, chain, out_dir):
     Returns:
         bool: True if extraction is successful, False otherwise.
     """
+    # Handle .gz compressed files
     decompressed_file = None
-
-    # Handle .gz and .ent.gz compressed files
     if input_file.endswith(".gz"):
         if input_file.endswith(".ent.gz"):
             decompressed_file = input_file[:-7] + ".pdb"  # Replace .ent.gz with .pdb
@@ -128,7 +127,7 @@ def extract_chains(input_file, chain, out_dir):
     if chain == "all":
         chain_list = list(available_chains)
     else:
-        chain = chain.upper()
+        chain = chain
         if chain not in available_chains:
             rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                    f"Chain '{chain}' not found in the structure. Available chains: {', '.join(sorted(available_chains))}\n")
