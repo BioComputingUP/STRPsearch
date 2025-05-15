@@ -124,7 +124,7 @@ def extract_chains(input_file, chain, out_dir):
     if chain == "all":
         chain_list = list(available_chains)
     else:
-        chain = chain.upper()
+        chain = chain
         if chain not in available_chains:
             rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                    f"Chain '{chain}' not found in the structure. Available chains: {', '.join(sorted(available_chains))}\n")
