@@ -112,9 +112,10 @@ def query_file(
     if os.path.exists(query_dir):
         for f in os.listdir(query_dir):
             os.remove(os.path.join(query_dir, f))
+    
     mime_type, encoding = mimetypes.guess_type(input_file)
     if mime_type:
-        if "pdb" in mime_type:
+        if "pdb" in mime_type or input_file.endswith(".ent.gz"):
             pdb_id = ds.extract_structure_and_chains(input_file)[0]
             success= ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
             
