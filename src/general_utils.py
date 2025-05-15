@@ -138,6 +138,7 @@ def segment_cif_directory(input_dir, output_dir):
                 # Apply Chainsaw to predict chopping regions
                 with open(os.devnull, 'w') as devnull:
                     with redirect_stdout(devnull):
+                        print(pdb_file)
                         chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
 
                 # Extract regions from Chainsaw results
