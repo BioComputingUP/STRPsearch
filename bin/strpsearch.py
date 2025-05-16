@@ -8,7 +8,7 @@ import mimetypes
 
 
 # Add parent directory to sys.path to allow importing from src
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')))
 
 from src import execute_strpsearch as ex
 from src import download_structure as ds
