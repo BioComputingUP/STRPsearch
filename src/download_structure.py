@@ -68,7 +68,7 @@ def extract_structure_and_chains(pdb_file):
 
     return pdb_id, chain_ids
 
-def extract_chains(input_file, chain, out_dir):
+def extract_chains(input_file, chain, out_dir, temp_dir):
     """
     Extracts specific chains from a PDB/mmCIF file (including .gz compressed files) 
     and saves them as separate PDB or CIF files.
@@ -77,14 +77,20 @@ def extract_chains(input_file, chain, out_dir):
         input_file (str): Path to the input structure file (PDB/mmCIF format, optionally .gz compressed).
         chain (str): Chain ID to extract. Use "all" to extract all chains.
         out_dir (str): Directory to save the extracted chain files.
+        temp_dir (str): Temporary directory to store decompressed files.
 
     Returns:
         bool: True if extraction is successful, False otherwise.
     """
-    # Handle .gz compressed files
+    # Ensure the temporary directory exists
+    os.makedirs(temp_dir, exist_ok=True)
+
     decompressed_file = None
+
+    # Handle .gz compressed files
     if input_file.endswith(".gz"):
-        decompressed_file = input_file[:-3]  # Remove the .gz extension
+        decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-3])  # Store in temp_dir
+        print(decompressed_file)
         with gzip.open(input_file, "rb") as gz_file:
             with open(decompressed_file, "wb") as out_file:
                 shutil.copyfileobj(gz_file, out_file)
@@ -130,6 +136,7 @@ def extract_chains(input_file, chain, out_dir):
                    f"Chain '{chain}' not found in the structure. Available chains: {', '.join(sorted(available_chains))}\n")
             return False
         chain_list = [chain]
+
     # Save each selected chain as a separate CIF file
     for ch_id in chain_list:
         new_structure = gemmi.Structure()
@@ -189,7 +196,8 @@ def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
     success = extract_chains(
         input_file=temp_structure_path,
         chain=chain,
-        out_dir=out_dir
+        out_dir=out_dir,
+        temp_dir=temp_dir
     )
 
     return success

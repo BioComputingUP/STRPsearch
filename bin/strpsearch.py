@@ -121,7 +121,7 @@ def query_file(
             
         elif "cif" in mime_type:
     # Extract chains from the input file
-            success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir)
+            success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir,temp_dir=temp_dir)
         else:
             rprint(f"[bold red]Only PDB / mmCIF format is accepted for query files[bold red]\n")
             return False
