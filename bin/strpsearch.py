@@ -89,7 +89,7 @@ def query_file(
 
     rprint(f"Using TUL database: {tul_db}")
     rprint(f"Using RUL database: {rul_db}")
-    
+
     if os.path.exists(out_dir):
         rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
     else:
@@ -136,6 +136,8 @@ def query_file(
         pymol_pse=pymol_pse,
         max_eval_p=max_eval,
         min_height_p=min_height,
+        tul_db=tul_db,
+        rul_db=rul_db,
     )
 
 

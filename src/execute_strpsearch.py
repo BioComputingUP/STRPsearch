@@ -25,18 +25,18 @@ threshold_p = cfg.threshold_p
 window_p = cfg.window_p
 flexibility_p = 1 - distance_p
 
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Instantiate essential modules
 cif_parser = MMCIFParser(QUIET=True)
 pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
 # Specify paths to ground-truth libraries
-tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
-rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
-ontology_path = os.path.join(project_root, "data", "ontology.tsv")
+# tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
+# rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
+ontology_path = os.path.join(cfg.project_root, "data", "ontology.tsv")
 ontology_df = pd.read_csv(ontology_path, delimiter="\t")
 
-ct_tmscore_path = os.path.join(project_root, "data", "ct_tmscore_means.json")
+ct_tmscore_path = os.path.join(cfg.project_root, "data", "ct_tmscore_means.json")
 # Load classification TM-score data
 with open(ct_tmscore_path, 'r') as fp:
     ct_tmscore_dict = json.load(fp)
@@ -50,6 +50,8 @@ def execute_predstrp(
         pymol_pse: bool,
         max_eval_p: float,
         min_height_p: str,
+        tul_db: str,
+        rul_db: str,
 ):
     start_time = time.time()
     logging.basicConfig(
