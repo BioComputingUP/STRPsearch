@@ -71,10 +71,25 @@ def query_file(
                 help="Minimum height of TM-score signals to be processed"
             )
         ] = cfg.min_height_p,
+        db: Annotated[
+            str, typer.Option(
+                help="Path to the database to use"
+            )
+        ] = None,
 ):
     """
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
+    if db:
+        tul_db = os.path.join(db, "tul_foldseek_db", "db")
+        rul_db = os.path.join(db, "rul_structure_db")
+    else:
+        tul_db = os.path.join(cfg.project_root, "data", "databases", "tul_foldseek_db", "db")
+        rul_db = os.path.join(cfg.project_root, "data", "databases", "rul_structure_db")
+
+    rprint(f"Using TUL database: {tul_db}")
+    rprint(f"Using RUL database: {rul_db}")
+    
     if os.path.exists(out_dir):
         rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
     else:
