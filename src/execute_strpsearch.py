@@ -31,11 +31,12 @@ pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
 io_handler_cif = MMCIFIO()
 
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+print(project_root)
 
 # Specify paths to ground-truth libraries
-tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
-rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
+# tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
+# rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
 ontology_path = os.path.join(project_root, "data", "ontology.tsv")
 ontology_df = pd.read_csv(ontology_path, delimiter="\t")
 
@@ -53,6 +54,8 @@ def execute_predstrp(
         pymol_pse: bool,
         max_eval_p: float,
         min_height_p: str,
+        tul_db: str ,
+        rul_db: str,
 ):
     """
     Executes the PredSTRP pipeline to identify and analyze repeat regions in protein structures.
