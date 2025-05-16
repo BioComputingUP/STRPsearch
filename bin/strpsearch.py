@@ -109,7 +109,7 @@ def query_file(
     query_dir = os.path.join(out_dir, "query_structures")
     os.makedirs(query_dir, exist_ok=True)
 
-    success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir)
+    success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir,temp_dir=temp_dir)
     if not success:
         sys.exit()
 
