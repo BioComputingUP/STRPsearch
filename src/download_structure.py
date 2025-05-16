@@ -94,7 +94,6 @@ def extract_chains(input_file, chain, out_dir,temp_dir):
             with open(decompressed_file, "wb") as out_file:
                 shutil.copyfileobj(gz_file, out_file)
         input_file = decompressed_file  # Update input_file to the decompressed file
-
     filename = os.path.basename(input_file)[:-4]
     try:
         # Load structure model using gemmi
