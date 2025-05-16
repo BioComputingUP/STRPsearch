@@ -1,4 +1,7 @@
 # Dependencies
+import os
+project_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
 
 foldseek_exe_path = "foldseek"
 

@@ -52,6 +52,7 @@ def main(
     min_height: str = typer.Option(cfg.min_height_p, help="Minimum height of TM-score signals to be processed."),
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
+    db: str = typer.Option(None, help="Path to the database to use."),
 ):
     """
     Main callback to store global options in the context.
@@ -75,10 +76,19 @@ def query_file(
     min_height: str = typer.Option(cfg.min_height_p, help="Minimum height of TM-score signals to be processed.",callback=validate_min_height),
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
+    db: str = typer.Option(None, help="Path to the database to use."),
 ):
     """
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
+     # Determine database paths
+    if db:
+        tul_db = os.path.join(db, "tul_foldseek_db", "db")
+        rul_db = os.path.join(db, "rul_structure_db")
+    else:
+        tul_db = os.path.join(cfg.project_root, "data", "databases", "tul_foldseek_db", "db")
+        rul_db = os.path.join(cfg.project_root, "data", "databases", "rul_structure_db")
+
     # Ensure the output directory exists
     if os.path.exists(out_dir):
         rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
@@ -158,6 +168,8 @@ def query_file(
         pymol_pse=pymol_pse,
         max_eval_p=max_eval,
         min_height_p=min_height,
+        tul_db=tul_db,
+        rul_db=rul_db,
     )
 
 @app.command()
