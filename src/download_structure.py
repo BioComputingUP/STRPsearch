@@ -68,7 +68,7 @@ def extract_structure_and_chains(pdb_file):
 
     return pdb_id, chain_ids
 
-def extract_chains(input_file, chain, out_dir, temp_dir):
+def extract_chains(input_file, chain, out_dir,temp_dir):
     """
     Extracts specific chains from a PDB/mmCIF file (including .gz compressed files) 
     and saves them as separate PDB or CIF files.
@@ -89,8 +89,10 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
 
     # Handle .gz compressed files
     if input_file.endswith(".gz"):
-        decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-3])  # Store in temp_dir
-        print(decompressed_file)
+        if input_file.endswith(".ent.gz"):
+            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-7] )+ ".pdb"  # Replace .ent.gz with .pdb
+        else:
+            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-3])  # Remove the .gz extension
         with gzip.open(input_file, "rb") as gz_file:
             with open(decompressed_file, "wb") as out_file:
                 shutil.copyfileobj(gz_file, out_file)
