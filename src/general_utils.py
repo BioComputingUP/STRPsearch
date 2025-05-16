@@ -10,6 +10,16 @@ import gemmi
 from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
 from contextlib import redirect_stdout
 
+# os.environ["OMP_NUM_THREADS"] = "1"
+# os.environ["OPENBLAS_NUM_THREADS"] = "1"
+# os.environ["MKL_NUM_THREADS"] = "1"
+# os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+# os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
+# import torch
+# torch.set_num_threads(1)
+# torch.set_num_interop_threads(1)
+
 from protein_domain_segmentation import ChainsawCluster
 class ResidueRangeSelect(Select):
     def __init__(self, chain_id, start_res, end_res):
@@ -138,9 +148,7 @@ def segment_cif_directory(input_dir, output_dir):
                 # Apply Chainsaw to predict chopping regions
                 with open(os.devnull, 'w') as devnull:
                     with redirect_stdout(devnull):
-                        print(pdb_file)
                         chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
-
                 # Extract regions from Chainsaw results
                 regions = extract_regions(chainsaw_result)
 
