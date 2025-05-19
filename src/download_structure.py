@@ -68,7 +68,7 @@ def extract_structure_and_chains(pdb_file):
 
     return pdb_id, chain_ids
 
-def extract_chains(input_file, chain, out_dir):
+def extract_chains(input_file, chain, out_dir,temp_dir):
     """
     Extracts specific chains from a PDB/mmCIF file (including .gz compressed files) 
     and saves them as separate PDB or CIF files.
@@ -81,19 +81,19 @@ def extract_chains(input_file, chain, out_dir):
     Returns:
         bool: True if extraction is successful, False otherwise.
     """
+    # Ensure the temporary directory exists
+    os.makedirs(temp_dir, exist_ok=True)
+    # Handle .gz compressed files
     decompressed_file = None
-
-    # Handle .gz and .ent.gz compressed files
     if input_file.endswith(".gz"):
         if input_file.endswith(".ent.gz"):
-            decompressed_file = input_file[:-7] + ".pdb"  # Replace .ent.gz with .pdb
+            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-7] )+ ".pdb"  # Replace .ent.gz with .pdb
         else:
-            decompressed_file = input_file[:-3]  # Remove the .gz extension
+            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-3])  # Remove the .gz extension
         with gzip.open(input_file, "rb") as gz_file:
             with open(decompressed_file, "wb") as out_file:
                 shutil.copyfileobj(gz_file, out_file)
         input_file = decompressed_file  # Update input_file to the decompressed file
-
     filename = os.path.basename(input_file)[:-4]
     try:
         # Load structure model using gemmi
@@ -128,7 +128,7 @@ def extract_chains(input_file, chain, out_dir):
     if chain == "all":
         chain_list = list(available_chains)
     else:
-        chain = chain.upper()
+        chain = chain
         if chain not in available_chains:
             rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                    f"Chain '{chain}' not found in the structure. Available chains: {', '.join(sorted(available_chains))}\n")
@@ -193,7 +193,8 @@ def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
     success = extract_chains(
         input_file=temp_structure_path,
         chain=chain,
-        out_dir=out_dir
+        out_dir=out_dir,
+        temp_dir=temp_dir
     )
 
     return success

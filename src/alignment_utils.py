@@ -2,7 +2,7 @@ from src.foldseek import Foldseek
 import pandas as pd
 import numpy as np
 import os
-from src.tmalign import Tmalign, Usalign
+from src.usalign import Usalign
 from Bio.PDB import Select
 
 
