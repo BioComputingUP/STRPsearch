@@ -54,8 +54,6 @@ def execute_predstrp(
         min_height_p: str,
         tul_db: str ,
         rul_db: str,
-        tul_db: str ,
-        rul_db: str,
 ):
     """
     Executes the PredSTRP pipeline to identify and analyze repeat regions in protein structures.
