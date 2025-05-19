@@ -32,7 +32,6 @@ io_handler = PDBIO()
 io_handler_cif = MMCIFIO()
 
 project_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-print(project_root)
 
 # Specify paths to ground-truth libraries
 # tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
@@ -54,6 +53,8 @@ def execute_predstrp(
         pymol_pse: bool,
         max_eval_p: float,
         min_height_p: str,
+        tul_db: str ,
+        rul_db: str,
         tul_db: str ,
         rul_db: str,
 ):
