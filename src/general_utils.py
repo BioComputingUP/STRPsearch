@@ -66,7 +66,6 @@ def extract_regions(region_string):
     """
 
     if not region_string:
-        print("Skipping file: region_string is None or empty.")
         return [] 
 
     regions = region_string.split(",")
@@ -138,21 +137,23 @@ def segment_cif_directory(input_dir, output_dir):
                 # Apply Chainsaw to predict chopping regions
                 with open(os.devnull, 'w') as devnull:
                     with redirect_stdout(devnull):
-                        print(pdb_file)
                         chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
 
                 # Extract regions from Chainsaw results
                 regions = extract_regions(chainsaw_result)
 
                 # Extract segments for each region
-                for region in regions:
-                    start = region['start']
-                    end = region['end']
-                    output_cif = os.path.join(
-                        output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
-                    )
-                    extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
-                os.remove(cif_path)  # Remove the original .cif file
+                if not regions:
+                    print(f"no segmentation found for {cif_file}")
+                else:
+                    for region in regions:
+                        start = region['start']
+                        end = region['end']
+                        output_cif = os.path.join(
+                            output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
+                        )
+                        extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
+                    os.remove(cif_path)  # Remove the original .cif file
 
                 # Delete the temporary .pdb file
                 os.remove(pdb_file)
