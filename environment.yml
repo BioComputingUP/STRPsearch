@@ -1,6 +1,7 @@
 name: strpsearch_env_ch_before
 channels:
   - bioconda
+  - schrodinger
   - conda-forge
   - defaults
 dependencies:

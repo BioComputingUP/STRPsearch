@@ -8,7 +8,7 @@ import mimetypes
 
 
 # Add parent directory to sys.path to allow importing from src
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')))
 
 from src import execute_strpsearch as ex
 from src import download_structure as ds
@@ -52,6 +52,7 @@ def main(
     min_height: str = typer.Option(cfg.min_height_p, help="Minimum height of TM-score signals to be processed."),
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
+    db: str = typer.Option(None, help="Path to the database to use."),
 ):
     """
     Main callback to store global options in the context.
@@ -75,10 +76,19 @@ def query_file(
     min_height: str = typer.Option(cfg.min_height_p, help="Minimum height of TM-score signals to be processed.",callback=validate_min_height),
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
+    db: str = typer.Option(None, help="Path to the database to use."),
 ):
     """
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
+     # Determine database paths
+    if db:
+        tul_db = os.path.join(db, "tul_foldseek_db", "db")
+        rul_db = os.path.join(db, "rul_structure_db")
+    else:
+        tul_db = os.path.join(cfg.project_root, "data", "databases", "tul_foldseek_db", "db")
+        rul_db = os.path.join(cfg.project_root, "data", "databases", "rul_structure_db")
+
     # Ensure the output directory exists
     if os.path.exists(out_dir):
         rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
@@ -113,16 +123,15 @@ def query_file(
     if os.path.exists(query_dir):
         for f in os.listdir(query_dir):
             os.remove(os.path.join(query_dir, f))
-    
     mime_type, encoding = mimetypes.guess_type(input_file)
     if mime_type:
-        if "pdb" in mime_type or input_file.endswith(".ent.gz"):
+        if "pdb" in mime_type or input_file.endswith(".ent.gz") or input_filename.endswith(".ent"):
             pdb_id = ds.extract_structure_and_chains(input_file)[0]
             success= ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
             
         elif "cif" in mime_type:
     # Extract chains from the input file
-            success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir)
+            success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir,temp_dir=temp_dir)
         else:
             rprint(f"[bold red]Only PDB / mmCIF format is accepted for query files[bold red]\n")
             return False
@@ -158,6 +167,8 @@ def query_file(
         pymol_pse=pymol_pse,
         max_eval_p=max_eval,
         min_height_p=min_height,
+        tul_db=tul_db,
+        rul_db=rul_db,
     )
 
 @app.command()
