@@ -32,10 +32,6 @@ io_handler = PDBIO()
 io_handler_cif = MMCIFIO()
 
 project_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-
-# Specify paths to ground-truth libraries
-# tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
-# rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
 ontology_path = os.path.join(project_root, "data", "ontology.tsv")
 ontology_df = pd.read_csv(ontology_path, delimiter="\t")
 
@@ -136,7 +132,6 @@ def execute_predstrp(
                 query_id =parts[0]
                 query_chain = parts[1]
                 query_name = query_id + "_" + query_chain
-                
                 target_name = row["target"]
                 target_chain = target_name[4]
                 e_val = row["e_value"]
@@ -165,7 +160,6 @@ def execute_predstrp(
                 # Load query structure and chain
                 query_path = os.path.join(structure_dir, f"{query_name_path}.cif")
                 qstructure = gemmi.read_structure(query_path)
-                lstructure=pdb_parser.get_structure(query_name, query_path)
                 qmodel = qstructure[0]
                 qchain_letter = qmodel[0].name
                 qchain = qmodel[qchain_letter]
@@ -206,7 +200,10 @@ def execute_predstrp(
                     target_repunit_path=target_repunit_path,
                     usalign_exe_path=cfg.usalign_exe_path
                 )
-
+                if x is None or y is None or len(x) == 0 or len(y) == 0:
+                    rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
+                           f"TM-score graph data is empty for hit {idx + 1}/{len(target_df)}. Skipping.\n")
+                    continue
                 # Smooth and adjust graph data
                 x, y = list(x), list(y)
                 y = gu.smooth_graph(y=y, target_avg_len=target_avg_len, window_p=window_p)
@@ -325,8 +322,9 @@ def execute_predstrp(
                            f"{idx + 1}/{len(target_df)}\n")
             except:
                 error_count += 1
-                traceback.print_exc()
+                # traceback.print_exc()
                 logging.error(traceback.format_exc())
+                rprint(f"[bold yellow]WARNING: Error occurred in hit {idx+1}/{len(target_df)}: {e}[/bold yellow]")
 
         if temp_query_dir_list:
             rprint(f"\n[bold][{gu.time()}] "
@@ -398,10 +396,11 @@ def execute_predstrp(
                         dst_path = os.path.join(out_region_dir, dst_name)
                         shutil.copy(filepath, dst_path)
 
-            except:
+            except Exception as e:
                 error_count += 1
-                traceback.print_exc()
+                # traceback.print_exc()
                 logging.error(traceback.format_exc())
+                rprint(f"[bold yellow]WARNING: Error occurred while transferring files for query directory '{temp_query_dir}': {e}[/bold yellow]")
 
         end_time = time.time()
         elapsed_time = end_time - start_time

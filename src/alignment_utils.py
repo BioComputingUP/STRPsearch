@@ -74,18 +74,27 @@ def find_target(output_file, max_eval):
     """
     Parses and filters the Foldseek search output to retain hits with the highest potential.
     """
+    try:
+        df = pd.read_csv(output_file, delimiter="\t", header=None, dtype={"ctr": str})
+    except Exception as e:
+        print(f"WARNING: Could not read Foldseek output file '{output_file}': {e}")
+        return False,0
     df = pd.read_csv(output_file, delimiter="\t", header=None, dtype={"ctr": str})
     df.columns = ["query", "target", "e_value", "q_start", "q_end"]
     df = df[df["e_value"] <= max_eval]
 
     if len(df) == 0:
         return False, df
-
-    # Extract class topology (ct) and average length from the target column
-    df[['t_ct', 't_avg_length']] = df['target'].str.extract(r'_(\d+\.\d+)_(\d+\.\d+)\.pdb')
-    df['t_ct'] = df['t_ct'].astype(str)
-    df['t_avg_length'] = df['t_avg_length'].astype(float)
-    df['target'] = df['target'].apply(lambda x: '_'.join(x.split('_')[:-2]))
+    try:
+        parts= df['target'].str.split('_', expand=True)
+        df['t_ct'] = parts[3]
+        tests= parts[4].str.split('.', expand=True)
+        df['t_avg_length'] = tests[0]+"."+tests[1]
+        df['t_ct'] = df['t_ct'].astype(str)
+        df['t_avg_length'] = df['t_avg_length'].astype(float)
+        df['target'] = df['target'].apply(lambda x: '_'.join(x.split('_')[:-2]))
+    except Exception as e:
+        print(f"WARNING: Could not parse target columns: {e}")
 
     target_list = []
 
@@ -109,36 +118,6 @@ def find_target(output_file, max_eval):
     return True, filter_overlap(target_df)
 
 
-def get_tmscore_graph_data(query_name, fragment_path_list, target_repunit_path, tmalign_exe_path):
-    """
-    Generates TM-score graph data by aligning structure fragments with the target structure using TM-align.
-    """
-    tmalign = Tmalign(exe_path=tmalign_exe_path)
-    tmscore_results = []
-
-    for fragment_path in fragment_path_list:
-        filename = os.path.basename(fragment_path)
-        fragment_start = filename[len(query_name):].split("_")[1]
-        command_output = tmalign(target_repunit_path, fragment_path)
-
-        # Parse TM-score from TM-align output
-        tm_score = None
-        for line in command_output.split("\n"):
-            if line.startswith('TM-score=') and 'if normalized by average length' in line:
-                tm_score = float(line.split('=')[1].split()[0])
-                break
-
-        tmscore_results.append([fragment_start, tm_score])
-
-    # Sort results by fragment start position
-    tm_score_results = [[int(i[0]), i[1]] for i in tmscore_results]
-    tm_score_results.sort(key=lambda x: x[0])
-
-    x = np.array([i[0] for i in tm_score_results])
-    y = np.array([i[1] for i in tm_score_results])
-
-    return x, y
-
 
 def get_tmscore_graph_data_us(query_name, fragment_path_list, target_repunit_path, usalign_exe_path):
     """
@@ -150,14 +129,21 @@ def get_tmscore_graph_data_us(query_name, fragment_path_list, target_repunit_pat
     for fragment_path in fragment_path_list:
         filename = os.path.basename(fragment_path)
         fragment_start = filename[len(query_name):].split("_")[1]
-        command_output = usalign(target_repunit_path, fragment_path)
-
+        try:
+            command_output = usalign(target_repunit_path, fragment_path)
+        except Exception as e:
+            print(f"WARNING: US-align failed for {fragment_path}: {e}")
+            continue
         # Parse TM-score from US-align output
         tm_score = None
         for line in command_output.splitlines():
-            if line.startswith('TM-score='):
-                tm_score = float(line.split('=')[1].split()[0])
-                break
+            try:
+                if line.startswith('TM-score='):
+                    tm_score = float(line.split('=')[1].split()[0])
+                    break
+            except Exception as e:
+                print(f"WARNING: Failed to parse TM-score from US-align output: {e}")
+                tm_score = None
 
         tmscore_results.append([fragment_start, tm_score])
 

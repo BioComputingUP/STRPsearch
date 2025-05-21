@@ -6,6 +6,7 @@ import seaborn as sns
 import numpy as np
 import json
 import os
+import math
 import gemmi
 from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
 from contextlib import redirect_stdout
@@ -67,25 +68,25 @@ def get_chain_id_from_filename(filename):
 def extract_regions(region_string):
     """
     Extracts start and end values from a region string and returns a list of dictionaries.
-
-    Args:
-        region_string (str): Input string representing regions (e.g., "73-482_504-590").
-
-    Returns:
-        list: A list of dictionaries with 'start' and 'end' keys.
     """
-
     if not region_string:
         return [] 
 
     regions = region_string.split(",")
     result = []
-
     for region in regions:
-        regions_l=region.split("_")
+        regions_l = region.split("_")
         for reg in regions_l:
-            start, end = map(int, reg.split("-"))  # Split each region by '-' and convert to integers
-            result.append({"start": start, "end": end})
+            parts = [p for p in reg.split("-") if p]  # Remove empty strings
+            if len(parts) == 2:
+                start, end = map(int, parts)
+                result.append({"start": start, "end": end})
+            elif len(parts) > 2:
+                # If more than 2 parts, take the first two valid as start and end
+                start, end = map(int, parts[:2])
+                result.append({"start": start, "end": end})
+            else:
+                print(f"Skipping malformed region: {reg}")
 
     return result
 
@@ -535,25 +536,24 @@ def plot_tmscore_graph(x, y, region_components, out_path):
     plt.tight_layout()
     # Save at the specified path in png format
     plt.savefig(out_path, format="png")
+    plt.close(fig)
+
 
 
 def smooth_graph(y, target_avg_len, window_p):
     """
     Smooths a graph data (heights)
     """
-    y = np.array(y)
 
     # Define the window size based the provided parameters
     window_size = round(target_avg_len * window_p)
     if window_size % 2 == 0:
         window_size -= 1
+    # Ensure window_size is at least 3 and not greater than len(y)
+    window_size = max(3, min(window_size, len(y) if len(y) % 2 == 1 else len(y) - 1))
 
     poly_order = 0
     # Smooth the graph by savgol_filter module
-    if window_size > len(y):
-        window_size = len(y) if len(y) % 2 == 1 else len(y) - 1
-        if window_size < 3:
-            return y 
     y = savgol_filter(y, window_size, poly_order)
 
     return y
@@ -626,6 +626,10 @@ def get_repeat_classi(ontology_df, code):
     """
     Retrieve the classification name of the repeat with its Class. Topology code
     """
-
-    repeat_classi = ontology_df[ontology_df["Code"] == code]["Name"].values[0]
-    return repeat_classi
+    if code is None or (isinstance(code, float) and math.isnan(code)):
+        # Optionally: return None or a default string instead of raising
+        return None
+    filtered = ontology_df[ontology_df["Code"] == code]
+    if filtered.empty:
+        return None
+    return filtered["Name"].values[0]

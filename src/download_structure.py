@@ -68,7 +68,7 @@ def extract_structure_and_chains(pdb_file):
 
     return pdb_id, chain_ids
 
-def extract_chains(input_file, chain, out_dir,temp_dir):
+def extract_chains(input_file, chain, out_dir, temp_dir):
     """
     Extracts specific chains from a PDB/mmCIF file (including .gz compressed files) 
     and saves them as separate PDB or CIF files.
@@ -89,14 +89,19 @@ def extract_chains(input_file, chain, out_dir,temp_dir):
 
     # Handle .gz compressed files
     if input_file.endswith(".gz"):
-        if input_file.endswith(".ent.gz"):
-            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-7] )+ ".pdb"  # Replace .ent.gz with .pdb
-        else:
-            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-3])  # Remove the .gz extension
-        with gzip.open(input_file, "rb") as gz_file:
-            with open(decompressed_file, "wb") as out_file:
-                shutil.copyfileobj(gz_file, out_file)
-        input_file = decompressed_file  # Update input_file to the decompressed file
+        try:
+            if input_file.endswith(".ent.gz"):
+                decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-7]) + ".pdb"
+            else:
+                decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-3])
+            with gzip.open(input_file, "rb") as gz_file:
+                with open(decompressed_file, "wb") as out_file:
+                    shutil.copyfileobj(gz_file, out_file)
+            input_file = decompressed_file
+        except Exception as e:
+            rprint(f"[bold][{gu.time()}][/bold] [bold red]Error decompressing file: {e}[/bold red]")
+            return False
+
     filename = os.path.basename(input_file)[:-4]
     try:
         # Load structure model using gemmi
@@ -107,51 +112,103 @@ def extract_chains(input_file, chain, out_dir,temp_dir):
         available_chains = {ch.name for ch in model}
     except Exception as e:
         rprint(f"[bold][{gu.time()}][/bold] [bold red]Error reading structure file: {e}[/bold red]")
+        if decompressed_file:
+            try:
+                os.remove(decompressed_file)
+            except Exception as cleanup_e:
+                rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
         return False
 
     # Determine the file type (PDB or mmCIF) using MIME type
-    mime_type, encoding = mimetypes.guess_type(input_file)
-    if mime_type:
-        if "pdb" in mime_type:
-            pdb_parser = PDBParser(QUIET=True)
-            structure = pdb_parser.get_structure(filename, input_file)
-        elif "cif" in mime_type:
-            cif_parser = MMCIFParser(QUIET=True)
-            structure = cif_parser.get_structure(filename, input_file)
+    try:
+        mime_type, encoding = mimetypes.guess_type(input_file)
+        if mime_type:
+            if "pdb" in mime_type:
+                try:
+                    pdb_parser = PDBParser(QUIET=True)
+                    structure = pdb_parser.get_structure(filename, input_file)
+                except Exception as e:
+                    rprint(f"[bold][{gu.time()}][/bold] [bold red]Error parsing PDB file: {e}[/bold red]")
+                    if decompressed_file:
+                        try:
+                            os.remove(decompressed_file)
+                        except Exception as cleanup_e:
+                            rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
+                    return False
+            elif "cif" in mime_type:
+                try:
+                    cif_parser = MMCIFParser(QUIET=True)
+                    structure = cif_parser.get_structure(filename, input_file)
+                except Exception as e:
+                    rprint(f"[bold][{gu.time()}][/bold] [bold red]Error parsing mmCIF file: {e}[/bold red]")
+                    if decompressed_file:
+                        try:
+                            os.remove(decompressed_file)
+                        except Exception as cleanup_e:
+                            rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
+                    return False
+            else:
+                rprint(f"[bold][{gu.time()}][/bold] [bold red]"
+                       "Only PDB / mmCIF format is accepted for query files\n")
+                if decompressed_file:
+                    try:
+                        os.remove(decompressed_file)
+                    except Exception as cleanup_e:
+                        rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
+                return False
         else:
             rprint(f"[bold][{gu.time()}][/bold] [bold red]"
-                   "Only PDB / mmCIF format is accepted for query files\n")
+                   f"The query file format is ambiguous for query {filename}\n")
+            if decompressed_file:
+                try:
+                    os.remove(decompressed_file)
+                except Exception as cleanup_e:
+                    rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
             return False
-    else:
-        rprint(f"[bold][{gu.time()}][/bold] [bold red]"
-               f"The query file format is ambiguous for query {filename}\n")
+    except Exception as e:
+        rprint(f"[bold][{gu.time()}][/bold] [bold red]Error determining file type: {e}[/bold red]")
+        if decompressed_file:
+            try:
+                os.remove(decompressed_file)
+            except Exception as cleanup_e:
+                rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
         return False
 
     # Handle chain selection
     if chain == "all":
         chain_list = list(available_chains)
     else:
-        chain = chain
         if chain not in available_chains:
             rprint(f"[bold][{gu.time()}][/bold] [bold red]"
                    f"Chain '{chain}' not found in the structure. Available chains: {', '.join(sorted(available_chains))}\n")
+            if decompressed_file:
+                try:
+                    os.remove(decompressed_file)
+                except Exception as cleanup_e:
+                    rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
             return False
         chain_list = [chain]
 
     # Save each selected chain as a separate CIF file
     for ch_id in chain_list:
-        new_structure = gemmi.Structure()
-        new_model = gemmi.Model(1)
-        target_chain = model[ch_id]
-        new_model.add_chain(target_chain)
-        new_structure.add_model(new_model)
+        try:
+            new_structure = gemmi.Structure()
+            new_model = gemmi.Model(1)
+            target_chain = model[ch_id]
+            new_model.add_chain(target_chain)
+            new_structure.add_model(new_model)
 
-        output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
-        new_structure.make_mmcif_document().write_file(output_path)
+            output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
+            new_structure.make_mmcif_document().write_file(output_path)
+        except Exception as e:
+            rprint(f"[bold yellow]WARNING: Could not save chain {ch_id}: {e}[/bold yellow]")
 
     # Clean up decompressed file if it was a .gz file
     if decompressed_file:
-        os.remove(decompressed_file)
+        try:
+            os.remove(decompressed_file)
+        except Exception as cleanup_e:
+            rprint(f"[bold yellow]WARNING: Could not remove decompressed file: {cleanup_e}[/bold yellow]")
 
     return True
 

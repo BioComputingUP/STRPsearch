@@ -131,7 +131,17 @@ def query_file(
             
         elif "cif" in mime_type:
     # Extract chains from the input file
-            success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir,temp_dir=temp_dir)
+            max_retries = 3
+            for attempt in range(1, max_retries + 1):
+                try:
+                    success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+                    break  # Success, exit the retry loop
+                except Exception as e:
+                    rprint(f"[bold yellow]Attempt {attempt} failed to extract chains: {e}[/bold yellow]")
+                    success = False
+                    if attempt == max_retries:
+                        rprint(f"[bold red]All {max_retries} attempts failed. Exiting.[/bold red]")
+                        sys.exit(0)
         else:
             rprint(f"[bold red]Only PDB / mmCIF format is accepted for query files[bold red]\n")
             return False
