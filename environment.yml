@@ -6,7 +6,7 @@ channels:
 dependencies:
   - qt-main
   - pymol-open-source
-  - python=3.8.18
+  - python=3.12.2
   - pandas
   - numpy
   - requests

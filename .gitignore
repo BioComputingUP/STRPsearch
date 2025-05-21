@@ -6,6 +6,8 @@ bin/src
 
 /data/databases/
 data/databases/
-
-/output
-/input
+temp3
+temp
+test
+output
+input
