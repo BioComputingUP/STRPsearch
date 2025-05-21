@@ -6,6 +6,7 @@ import seaborn as sns
 import numpy as np
 import json
 import os
+import math
 import gemmi
 
 
@@ -358,25 +359,24 @@ def plot_tmscore_graph(x, y, region_components, out_path):
     plt.tight_layout()
     # Save at the specified path in png format
     plt.savefig(out_path, format="png")
+    plt.close(fig)
+
 
 
 def smooth_graph(y, target_avg_len, window_p):
     """
     Smooths a graph data (heights)
     """
-    y = np.array(y)
 
     # Define the window size based the provided parameters
     window_size = round(target_avg_len * window_p)
     if window_size % 2 == 0:
         window_size -= 1
+    # Ensure window_size is at least 3 and not greater than len(y)
+    window_size = max(3, min(window_size, len(y) if len(y) % 2 == 1 else len(y) - 1))
 
     poly_order = 0
     # Smooth the graph by savgol_filter module
-    if window_size > len(y):
-        window_size = len(y) if len(y) % 2 == 1 else len(y) - 1
-        if window_size < 3:
-            return y 
     y = savgol_filter(y, window_size, poly_order)
 
     return y
@@ -449,6 +449,10 @@ def get_repeat_classi(ontology_df, code):
     """
     Retrieve the classification name of the repeat with its Class. Topology code
     """
-
-    repeat_classi = ontology_df[ontology_df["Code"] == code]["Name"].values[0]
-    return repeat_classi
+    if code is None or (isinstance(code, float) and math.isnan(code)):
+        # Optionally: return None or a default string instead of raising
+        return None
+    filtered = ontology_df[ontology_df["Code"] == code]
+    if filtered.empty:
+        return None
+    return filtered["Name"].values[0]
