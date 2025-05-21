@@ -2,7 +2,7 @@ import os
 import sys
 
 # Add parent directory to sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')))
 
 from src import execute_strpsearch as ex
 from src import download_structure as ds
@@ -71,10 +71,25 @@ def query_file(
                 help="Minimum height of TM-score signals to be processed"
             )
         ] = cfg.min_height_p,
+        db: Annotated[
+            str, typer.Option(
+                help="Path to the database to use"
+            )
+        ] = None,
 ):
     """
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
+    if db:
+        tul_db = os.path.join(db, "tul_foldseek_db", "db")
+        rul_db = os.path.join(db, "rul_structure_db")
+    else:
+        tul_db = os.path.join(cfg.project_root, "data", "databases", "tul_foldseek_db", "db")
+        rul_db = os.path.join(cfg.project_root, "data", "databases", "rul_structure_db")
+
+    rprint(f"Using TUL database: {tul_db}")
+    rprint(f"Using RUL database: {rul_db}")
+
     if os.path.exists(out_dir):
         rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
     else:
@@ -109,7 +124,7 @@ def query_file(
     query_dir = os.path.join(out_dir, "query_structures")
     os.makedirs(query_dir, exist_ok=True)
 
-    success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir)
+    success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir,temp_dir=temp_dir)
     if not success:
         sys.exit()
 
@@ -121,6 +136,8 @@ def query_file(
         pymol_pse=pymol_pse,
         max_eval_p=max_eval,
         min_height_p=min_height,
+        tul_db=tul_db,
+        rul_db=rul_db,
     )
 
 

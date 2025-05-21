@@ -96,6 +96,8 @@ def find_target(output_file, max_eval):
     Takes the TSV output file of Foldseek search,
     parses and filters the df to keep the hits with the highest potential
     """
+    if os.path.getsize(output_file) == 0:
+        return False, 0
 
     # Load the dataframe
     df = pd.read_csv(output_file, delimiter="\t", header=None, dtype={"ctr": str})
@@ -108,14 +110,13 @@ def find_target(output_file, max_eval):
     if len(df) == 0:
         return False, df
 
-    # Extracting 'avg_len' and 'ct' from 'target' and assign them to new columns
-    df[['t_ct', 't_avg_length']] = df['target'].str.extract(r'_(\d+\.\d+)_(\d+\.\d+)\.pdb')
-
-    # Convert 'ct' and 'avg_len' to floating-point numbers
+    parts= df['target'].str.split('_', expand=True)
+    # df['target'] = parts[0] + '_' + parts[1] + '_' + parts[2]
+    df['t_ct'] = parts[3]
+    tests= parts[4].str.split('.', expand=True)
+    df['t_avg_length'] = tests[0]+"."+tests[1]
     df['t_ct'] = df['t_ct'].astype(str)
     df['t_avg_length'] = df['t_avg_length'].astype(float)
-
-    # Modify 'target' column
     df['target'] = df['target'].apply(lambda x: '_'.join(x.split('_')[:-2]))
 
     # Create a list to save the query-target combos that have the least E-value for each class.topology (ct)

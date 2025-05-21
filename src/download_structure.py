@@ -18,48 +18,77 @@ class ChainSelector(Select):
             return True
 
 
-def extract_chains(input_file, chain, out_dir):
-    filename = os.path.basename(input_file)[:-4]
+def extract_chains(input_file, chain, out_dir ,temp_dir):
+    """
+    Extracts specific chains from a PDB/mmCIF file (including .gz and .ent.gz compressed files)
+    and saves them as separate PDB or CIF files.
+
+    Args:
+        input_file (str): Path to the input structure file (PDB/mmCIF format, optionally .gz or .ent.gz compressed).
+        chain (str): Chain ID to extract. Use "all" to extract all chains.
+        out_dir (str): Directory to save the extracted chain files.
+
+    Returns:
+        bool: True if extraction is successful, False otherwise.
+    """
+        # Ensure the temporary directory exists
+    os.makedirs(temp_dir, exist_ok=True)
+
+    filename = os.path.basename(input_file)
     decompressed_file = None
+
+    # Handle .gz and .ent.gz compressed files
     if input_file.endswith(".gz"):
-        decompressed_file = input_file[:-3]  # Remove the .gz extension
+        if input_file.endswith(".ent.gz"):
+            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-7]) + ".pdb"  # Replace .ent.gz with .pdb
+        else:
+            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file)[:-3])  # Remove the .gz extension
         with gzip.open(input_file, "rb") as gz_file:
             with open(decompressed_file, "wb") as out_file:
                 shutil.copyfileobj(gz_file, out_file)
         input_file = decompressed_file  # Update input_file to the decompressed file
 
+    # Remove the file extension for the filename
     filename = os.path.basename(input_file)[:-4]
+
+    # Determine the file type (PDB or mmCIF) using MIME type
     mime_type, encoding = mimetypes.guess_type(input_file)
     if mime_type:
-        if "pdb" in mime_type:
+        if "pdb" in mime_type or input_file.endswith(".pdb"):
             pdb_parser = PDBParser(QUIET=True)
             # Parse the structure from the PDB file
             structure = pdb_parser.get_structure(filename, input_file)
         elif "cif" in mime_type:
-            # Instantiate essential modules
             cif_parser = MMCIFParser(QUIET=True)
-            # Parse the structure from the PDB file
+            # Parse the structure from the mmCIF file
             structure = cif_parser.get_structure(filename, input_file)
         else:
             rprint(f"[bold][{gu.time()}][bold] [bold red]"
                    "Only PDB / mmCIF format is accepted for query files\n")
-            # logging.error("Only PDB / mmCIF format is accepted for query files")
             return False
     else:
         rprint(f"[bold][{gu.time()}][bold] [bold red]"
                f"The query file format is ambiguous for query {filename}\n")
-        # logging.error(f"The query file format is ambiguous for query {query_name}")
         return False
 
+    # Extract chains
     structure_model = structure[0]
     chain_list = []
     if chain == "all":
         for chain in structure_model:
-            chain_list.append(chain.id)
+            if len(chain.id) == 1:
+                chain_list.append(chain.id)
+            else: 
+                rprint(f"[yellow] Warnining : Skipping chain '{chain.id}' (invalid PDB chain ID)[/yellow]")
     else:
-        chain = chain.upper()
+        # Only use the first character if chain ID is longer
+        if isinstance(chain, str) and len(chain) > 1:
+            rprint(f"[yellow]Truncating chain '{chain}' to '{chain[0]}' for PDB format[/yellow]")
+            chain = chain[0]
         chain_list.append(chain)
 
+
+    # Save each chain as a separate PDB file
     for chain in chain_list:
         # Create a new structure with only the specified chain
         selector = ChainSelector(chain)
@@ -67,6 +96,8 @@ def extract_chains(input_file, chain, out_dir):
         io.set_structure(structure)
         output_path = os.path.join(out_dir, f"{filename}_{chain}.pdb")
         io.save(output_path, select=selector)
+
+    # Clean up decompressed file if it was a .gz or .ent.gz file
     if decompressed_file:
         os.remove(decompressed_file)
 
@@ -108,7 +139,8 @@ def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
     success = extract_chains(
         input_file=temp_structure_path,
         chain=chain,
-        out_dir=out_dir
+        out_dir=out_dir,
+        temp_dir=temp_dir
     )
 
     return success

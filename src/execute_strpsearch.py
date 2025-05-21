@@ -14,6 +14,7 @@ import shutil
 import typer
 import os
 import time
+import math
 import re
 
 # Define the computational parameters
@@ -25,18 +26,18 @@ threshold_p = cfg.threshold_p
 window_p = cfg.window_p
 flexibility_p = 1 - distance_p
 
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Instantiate essential modules
 cif_parser = MMCIFParser(QUIET=True)
 pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
 # Specify paths to ground-truth libraries
-tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
-rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
-ontology_path = os.path.join(project_root, "data", "ontology.tsv")
+# tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
+# rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
+ontology_path = os.path.join(cfg.project_root, "data", "ontology.tsv")
 ontology_df = pd.read_csv(ontology_path, delimiter="\t")
 
-ct_tmscore_path = os.path.join(project_root, "data", "ct_tmscore_means.json")
+ct_tmscore_path = os.path.join(cfg.project_root, "data", "ct_tmscore_means.json")
 # Load classification TM-score data
 with open(ct_tmscore_path, 'r') as fp:
     ct_tmscore_dict = json.load(fp)
@@ -50,6 +51,8 @@ def execute_predstrp(
         pymol_pse: bool,
         max_eval_p: float,
         min_height_p: str,
+        tul_db: str,
+        rul_db: str,
 ):
     start_time = time.time()
     logging.basicConfig(
@@ -102,6 +105,7 @@ def execute_predstrp(
         output_file=fs_output,
         temp_dir=temp_dir,
     )
+    
 
     # Create a dataframe from hits, if any
     found_hit, target_df = au.find_target(
@@ -117,9 +121,10 @@ def execute_predstrp(
             try:
                 row = target_df.iloc[idx]
                 # Extract essential variables
-                query_id = "_".join(row["query"].split("_")[:-1])
+                parts= row["query"].split("_")
+                query_id = parts[0]
                 # query_chain = row["query"].split("_")[-1][:-4]
-                query_chain = re.search(r"_(.*?)(?:\.|$)", row["query"]).group(1)
+                query_chain = parts[1]
                 query_name = query_id + "_" + query_chain
                 target_name = row["target"]
                 target_chain = target_name[4]
@@ -203,9 +208,12 @@ def execute_predstrp(
                     target_repunit_path=target_repunit_path,
                     tmalign_exe_path=cfg.tmalign_exe_path
                 )
+                if x is None or y is None or len(x) == 0 or len(y) == 0:
+                    rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
+                           f"TM-score graph data is empty for hit {idx + 1}/{len(target_df)}. Skipping.\n")
+                    continue
                 # Convert numpy arrays to lists
                 x, y = list(x), list(y)
-
                 # Smooth the graph data
                 y = gu.smooth_graph(
                     y=y,
@@ -265,7 +273,6 @@ def execute_predstrp(
                     temp_query_dir = os.path.join(temp_dir, f"{query_name}")
                     os.makedirs(temp_query_dir, exist_ok=True)
                     temp_query_dir_list.append(temp_query_dir)
-
                     # Loop the through the regions
                     for region_id, components in regions_dict.items():
                         start_res = components["units"][0][0]
@@ -341,7 +348,7 @@ def execute_predstrp(
                            f"{idx + 1}/{len(target_df)}\n")
             except:
                 error_count += 1
-                traceback.print_exc()
+                # traceback.print_exc()
                 logging.error(traceback.format_exc())
 
         if temp_query_dir_list:
@@ -414,7 +421,7 @@ def execute_predstrp(
 
             except:
                 error_count += 1
-                traceback.print_exc()
+                # traceback.print_exc()
                 logging.error(traceback.format_exc())
 
         end_time = time.time()
