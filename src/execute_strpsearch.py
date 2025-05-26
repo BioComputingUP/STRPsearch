@@ -391,7 +391,7 @@ def execute_predstrp(
                         dst_path = os.path.join(out_region_dir, dst_name)
                         shutil.copy(filepath, dst_path)
 
-            except:
+            except Exception as e:
                 error_count += 1
                 # traceback.print_exc()
                 logging.error(traceback.format_exc())
