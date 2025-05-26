@@ -323,7 +323,7 @@ def execute_predstrp(
                     rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
                            f"No potential repeat region was found with hit "
                            f"{idx + 1}/{len(target_df)}\n")
-            except:
+            except Exception as e:
                 error_count += 1
                 # traceback.print_exc()
                 logging.error(traceback.format_exc())

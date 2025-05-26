@@ -10,6 +10,7 @@ import os
 import math
 import warnings
 import gemmi
+import re
 from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
 from contextlib import redirect_stdout
 import warnings
@@ -72,6 +73,7 @@ def get_chain_id_from_filename(filename):
 def extract_regions(region_string):
     """
     Extracts start and end values from a region string and returns a list of dictionaries.
+    Handles cases where residue numbers may have insertion codes (e.g., 365I).
     """
     if not region_string:
         return [] 
@@ -82,13 +84,17 @@ def extract_regions(region_string):
         regions_l = region.split("_")
         for reg in regions_l:
             parts = [p for p in reg.split("-") if p]  # Remove empty strings
-            if len(parts) == 2:
-                start, end = map(int, parts)
-                result.append({"start": start, "end": end})
-            elif len(parts) > 2:
-                # If more than 2 parts, take the first two valid as start and end
-                start, end = map(int, parts[:2])
-                result.append({"start": start, "end": end})
+            if len(parts) >= 2:
+                # Extract only the numeric part for start and end
+                def extract_num(s):
+                    m = re.match(r"(\d+)", s)
+                    return int(m.group(1)) if m else None
+                start = extract_num(parts[0])
+                end = extract_num(parts[1])
+                if start is not None and end is not None:
+                    result.append({"start": start, "end": end})
+                else:
+                    print(f"Skipping malformed region: {reg}")
             else:
                 print(f"Skipping malformed region: {reg}")
 
@@ -159,6 +165,11 @@ def segment_cif_directory(input_dir, output_dir):
                     except Exception as e:
                         print(f"Unexpected error while parsing {input_file}: {e}")
                         return False
+                    for model in structure:
+                        chains_to_remove = [chain for chain in model if len(chain.id) > 1]
+                        for chain in chains_to_remove:
+                            print(f"Skipping chain id '{chain.id}' (invalid for PDB format).")
+                            model.detach_child(chain.id)
                     io = PDBIO()
                     io.set_structure(structure)
                     io.save(pdb_file)
