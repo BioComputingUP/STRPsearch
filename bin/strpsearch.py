@@ -97,13 +97,13 @@ def query_file(
 
     if not os.path.exists(temp_dir):
         rprint("[bold red]Temporary directory does not exist[/bold red]\n")
-        sys.exit()
+        sys.exit(0)
     else:
         temp_dir = tempfile.mkdtemp(dir=temp_dir)
 
     if not os.path.exists(input_file):
         rprint(f"[bold red]Input file does not exist")
-        sys.exit()
+        sys.exit(0)
 
     if min_height != "auto":
         try:
