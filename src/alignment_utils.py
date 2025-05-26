@@ -4,8 +4,9 @@ import numpy as np
 import os
 from src.usalign import Usalign
 from Bio.PDB import Select
-
-
+import warnings
+from Bio import BiopythonWarning
+warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 
 def search_tul(foldseek_exe_path, query_dir, tul_fs_db, output_file, temp_dir):

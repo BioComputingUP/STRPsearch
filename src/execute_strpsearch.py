@@ -12,10 +12,13 @@ import logging
 import shutil
 import typer
 import os
+import warnings
+from Bio import BiopythonWarning
 import time
 import re
 import gemmi
 
+warnings.filterwarnings("ignore", category=BiopythonWarning)
 # Define computational parameters
 distance_p = cfg.distance_p
 frame_step = cfg.frame_step_p

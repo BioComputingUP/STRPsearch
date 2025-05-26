@@ -2,14 +2,18 @@ from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 from datetime import datetime
 from Bio.PDB import Select
+from Bio import BiopythonWarning
 import seaborn as sns
 import numpy as np
 import json
 import os
 import math
+import warnings
 import gemmi
 from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
 from contextlib import redirect_stdout
+import warnings
+warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 # os.environ["OMP_NUM_THREADS"] = "1"
 # os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -129,44 +133,64 @@ def segment_cif_directory(input_dir, output_dir):
         output_dir (str): Path to the directory where output .cif files will be saved.
     """
     # os.makedirs(output_dir, exist_ok=True)  # Ensure the output directory exists
-    chainsaw_cluster = ChainsawCluster()  # Initialize ChainsawCluster
-    for cif_file in os.listdir(input_dir):
-        
-        if cif_file.endswith(".cif"):
-            cif_path = os.path.join(input_dir, cif_file)
-            if is_polymer_chain_cif(cif_path):
-                chain_id = get_chain_id_from_filename(cif_file)  # Extract chain ID from filename
-                
-                pdb_file = cif_path.replace(".cif", ".pdb")  # Temporary .pdb file path
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        chainsaw_cluster = ChainsawCluster()  # Initialize ChainsawCluster
+        for cif_file in os.listdir(input_dir):
+            
+            if cif_file.endswith(".cif"):
+                cif_path = os.path.join(input_dir, cif_file)
+                if is_polymer_chain_cif(cif_path):
+                    chain_id = get_chain_id_from_filename(cif_file)  # Extract chain ID from filename
+                    
+                    pdb_file = cif_path.replace(".cif", ".pdb")  # Temporary .pdb file path
 
-                # Convert .cif to .pdb
-                parser = MMCIFParser(QUIET=True)
-                structure = parser.get_structure("structure", cif_path)
-                io = PDBIO()
-                io.set_structure(structure)
-                io.save(pdb_file)
-                # Apply Chainsaw to predict chopping regions
-                with open(os.devnull, 'w') as devnull:
-                    with redirect_stdout(devnull):
-                        chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
-                # Extract regions from Chainsaw results
-                regions = extract_regions(chainsaw_result)
+                    # Convert .cif to .pdb
+                    parser = MMCIFParser(QUIET=True)
+                    
+                    try:
+                        structure = parser.get_structure("structure", cif_path)
+                    except IndexError as e:
+                        print(f"IndexError while parsing {input_file}: {e}")
+                        return False  # or handle as appropriate
+                    except KeyError as e:
+                        print(f"KeyError while parsing {input_file}: {e}")
+                        return False
+                    except Exception as e:
+                        print(f"Unexpected error while parsing {input_file}: {e}")
+                        return False
+                    io = PDBIO()
+                    io.set_structure(structure)
+                    io.save(pdb_file)
+                    # Apply Chainsaw to predict chopping regions
+                    with open(os.devnull, 'w') as devnull:
+                        with redirect_stdout(devnull):
+                            try:
+                                chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
+                            except RuntimeError as e:
+                                print(f"RuntimeError during Chainsaw prediction for {pdb_file}: {e}")
+                                continue  # Skip this file and continue with the next
+                            except Exception as e:
+                                print(f"Unexpected error during Chainsaw prediction for {pdb_file}: {e}")
+                                continue
+                    # Extract regions from Chainsaw results
+                    regions = extract_regions(chainsaw_result)
 
-                # Extract segments for each region
-                if not regions:
-                    print(f"no segmentation found for {cif_file}")
-                else:
-                    for region in regions:
-                        start = region['start']
-                        end = region['end']
-                        output_cif = os.path.join(
-                            output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
-                        )
-                        extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
-                    os.remove(cif_path)  # Remove the original .cif file
+                    # Extract segments for each region
+                    if not regions:
+                        print(f"no segmentation found for {cif_file}")
+                    else:
+                        for region in regions:
+                            start = region['start']
+                            end = region['end']
+                            output_cif = os.path.join(
+                                output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
+                            )
+                            extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
+                        os.remove(cif_path)  # Remove the original .cif file
 
-                # Delete the temporary .pdb file
-                os.remove(pdb_file)
+                    # Delete the temporary .pdb file
+                    os.remove(pdb_file)
 
 # Helper function to extract chain ID from filename
 def get_chain_id_from_filename(filename):
