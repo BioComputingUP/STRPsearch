@@ -150,7 +150,8 @@ def query_file(
         rprint(f"[bold red]The query file format is ambiguous for query {input_file}[bold red]\n")
         return False
     if not success:
-        sys.exit("Chain extraction failed.")
+        rprint("[bold red]Chain extraction failed.[/bold red]")
+        return
 
     # If a specific chain is requested, verify its file exists
     if chain and chain.lower() != "all":
