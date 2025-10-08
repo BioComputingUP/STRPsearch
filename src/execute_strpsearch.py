@@ -52,6 +52,7 @@ def execute_predstrp(
         min_height_p: str,
         tul_db: str ,
         rul_db: str,
+        pdb_id: str,
 ):
     """
     Executes the PredSTRP pipeline to identify and analyze repeat regions in protein structures.
@@ -302,7 +303,7 @@ def execute_predstrp(
                         json_out_path = os.path.join(temp_query_dir, f"{out_name}.json")
 
                         gu.make_json(
-                            structure_id=query_id,
+                            structure_id=pdb_id,
                             chain_id=qchain_letter,
                             ct=ct,
                             region_id=region_id,

@@ -5,7 +5,10 @@ import typer
 from rich import print as rprint
 from typing_extensions import Annotated
 import mimetypes
-
+from Bio.PDB import PDBParser
+pdbparser=PDBParser()
+from Bio.PDB import MMCIFParser
+cifprarser=MMCIFParser()
 
 # Add parent directory to sys.path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')))
@@ -135,7 +138,8 @@ def query_file(
             max_retries = 3
             for attempt in range(1, max_retries + 1):
                 try:
-                    success = ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+                    success , pdb_id= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+                    print(pdb_id)
                     break  # Success, exit the retry loop
                 except Exception as e:
                     rprint(f"[bold yellow]Attempt {attempt} failed to extract chains: {e}[/bold yellow]")
@@ -181,6 +185,7 @@ def query_file(
         min_height_p=min_height,
         tul_db=tul_db,
         rul_db=rul_db,
+        pdb_id=pdb_id,
     )
 
 @app.command()
