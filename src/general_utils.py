@@ -573,6 +573,8 @@ def plot_tmscore_graph(x, y, region_components, out_path):
     plt.savefig(out_path, format="png")
     plt.close(fig)
 
+    plt.close(fig)
+
 
 
 def smooth_graph(y, target_avg_len, window_p):
@@ -584,6 +586,8 @@ def smooth_graph(y, target_avg_len, window_p):
     window_size = round(target_avg_len * window_p)
     if window_size % 2 == 0:
         window_size -= 1
+    # Ensure window_size is at least 3 and not greater than len(y)
+    window_size = max(3, min(window_size, len(y) if len(y) % 2 == 1 else len(y) - 1))
     # Ensure window_size is at least 3 and not greater than len(y)
     window_size = max(3, min(window_size, len(y) if len(y) % 2 == 1 else len(y) - 1))
 

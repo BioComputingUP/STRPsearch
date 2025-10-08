@@ -145,6 +145,13 @@ def get_tmscore_graph_data_us(query_name, fragment_path_list, target_repunit_pat
             except Exception as e:
                 print(f"WARNING: Failed to parse TM-score from US-align output: {e}")
                 tm_score = None
+            try:
+                if line.startswith('TM-score='):
+                    tm_score = float(line.split('=')[1].split()[0])
+                    break
+            except Exception as e:
+                print(f"WARNING: Failed to parse TM-score from US-align output: {e}")
+                tm_score = None
 
         tmscore_results.append([fragment_start, tm_score])
 
