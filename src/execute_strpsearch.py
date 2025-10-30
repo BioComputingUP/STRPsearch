@@ -407,14 +407,9 @@ def execute_predstrp(
                         dst_name = "_".join(os.path.basename(filepath).split("_")[:-2]) + "." + extension
                         dst_path = os.path.join(out_region_dir, dst_name)
                         shutil.copy(filepath, dst_path)
-
-            except Exception as e:
             except Exception as e:
                 error_count += 1
-                # traceback.print_exc()
-                # traceback.print_exc()
                 logging.error(traceback.format_exc())
-                rprint(f"[bold yellow]WARNING: Error occurred while transferring files for query directory '{temp_query_dir}': {e}[/bold yellow]")
                 rprint(f"[bold yellow]WARNING: Error occurred while transferring files for query directory '{temp_query_dir}': {e}[/bold yellow]")
 
         end_time = time.time()
