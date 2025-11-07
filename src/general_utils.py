@@ -155,15 +155,15 @@ def segment_cif_directory(input_dir, output_dir):
                     parser = MMCIFParser(QUIET=True)
                     
                     try:
-                        structure = parser.get_structure("structure", cif_path)
+                        structure = parser.get_structure("cif_file", cif_path)
                     except IndexError as e:
-                        print(f"IndexError while parsing {input_file}: {e}")
+                        print(f"IndexError while parsing {cif_file}: {e}")
                         return False  # or handle as appropriate
                     except KeyError as e:
-                        print(f"KeyError while parsing {input_file}: {e}")
+                        print(f"KeyError while parsing {cif_file}: {e}")
                         return False
                     except Exception as e:
-                        print(f"Unexpected error while parsing {input_file}: {e}")
+                        print(f"Unexpected error while parsing {cif_file}: {e}")
                         return False
                     for model in structure:
                         chains_to_remove = [chain for chain in model if len(chain.id) > 1]

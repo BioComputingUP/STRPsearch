@@ -37,8 +37,6 @@ io_handler_cif = MMCIFIO()
 project_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 # Specify paths to ground-truth libraries
-# tul_db = os.path.join(project_root, "data", "databases", "tul_foldseek_db", "db")
-# rul_db = os.path.join(project_root, "data", "databases", "rul_structure_db")
 ontology_path = os.path.join(project_root, "data", "ontology.tsv")
 ontology_df = pd.read_csv(ontology_path, delimiter="\t")
 
@@ -108,7 +106,6 @@ def execute_predstrp(
     rprint(f"[bold blue]Output directory: {out_dir}")
     rprint(f"[bold blue]Temporary directory: {temp_dir}")
     rprint(f"[bold blue]Maximum E-value: {max_eval_p}")
-    rprint(f"[bold blue]Minimum height: {min_height_p}\n")
 
     
     gu.segment_cif_directory(structure_dir,structure_dir)
@@ -166,7 +163,9 @@ def execute_predstrp(
                 rprint(f"[bold blue]Classification: {target_classi}\n")
 
                 # Load query structure and chain
+    
                 query_path = os.path.join(structure_dir, f"{query_name_path}.cif")
+                print(f"Loading query structure from: {query_path}")
                 qstructure = gemmi.read_structure(query_path)
                 qmodel = qstructure[0]
                 qchain_letter = qmodel[0].name
