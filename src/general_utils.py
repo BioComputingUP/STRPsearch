@@ -72,22 +72,21 @@ def extract_segment_to_cif(pdb_file, chain_id, start_res, end_res, output_file):
 
 def get_chain_id_from_filename(filename):
     """
-    Extracts the chain ID from a .cif filename in the format 'id_chainid.cif'.
+    Extracts the chain ID from a .cif filename in the format '*_chain.cif',
+    taking the last underscore-separated part as the chain ID.
 
     Args:
-        filename (str): The name of the .cif file (e.g., '1a0t_P.cif').
+        filename (str): The name of the .cif file (e.g., '1a0t_P.cif' or 'some_file_name_P.cif').
 
     Returns:
         str: The chain ID extracted from the filename.
     """
-    # Remove the file extension
-    base_name = os.path.splitext(filename)[0]
-    # Split by underscore and return the second part (chain ID)
-    parts = base_name.split("_")
-    if len(parts) > 1:
-        return parts[1]  # Chain ID is the second part
-    else:
+    base_name = os.path.splitext(filename)[0]  # Remove extension
+    if "_" not in base_name:
         raise ValueError(f"Filename '{filename}' does not contain a chain ID.")
+    chain_id = base_name.split("_")[-1]  # Take last part
+    return chain_id
+
 
 
 def extract_regions(region_string):
