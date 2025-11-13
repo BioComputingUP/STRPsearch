@@ -82,6 +82,7 @@ def get_chain_id_from_filename(filename):
         str: The chain ID extracted from the filename.
     """
     base_name = os.path.splitext(filename)[0]  # Remove extension
+    print(base_name)
     if "_" not in base_name:
         raise ValueError(f"Filename '{filename}' does not contain a chain ID.")
     chain_id = base_name.split("_")[-1]  # Take last part
