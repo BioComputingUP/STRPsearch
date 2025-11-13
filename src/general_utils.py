@@ -167,7 +167,7 @@ def segment_cif_directory(input_dir, output_dir):
                 cif_path = os.path.join(input_dir, cif_file)
                 if is_polymer_chain_cif(cif_path):
                     chain_id = get_chain_id_from_filename(cif_file)  # Extract chain ID from filename
-                    
+                    print(f"Processing {cif_file} for chain {chain_id}...")
                     pdb_file = cif_path.replace(".cif", ".pdb")  # Temporary .pdb file path
 
                     # Convert .cif to .pdb
