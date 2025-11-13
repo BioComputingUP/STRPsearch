@@ -82,7 +82,6 @@ def get_chain_id_from_filename(filename):
         str: The chain ID extracted from the filename.
     """
     base_name = os.path.splitext(filename)[0]  # Remove extension
-    print(base_name)
     if "_" not in base_name:
         raise ValueError(f"Filename '{filename}' does not contain a chain ID.")
     chain_id = base_name.split("_")[-1]  # Take last part
@@ -211,14 +210,12 @@ def segment_cif_directory(input_dir, output_dir):
                     if not regions:
                         print(f"no segmentation found for {cif_file}")
                     else:
-                        print(f"Segments found for {cif_file}: {regions}")
                         for region in regions:
                             start = region['start']
                             end = region['end']
                             output_cif = os.path.join(
                                 output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
                             )
-                            print(f"Extracting segment: {output_cif} with range {start}-{end}")
                             extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
                         os.remove(cif_path)  # Remove the original .cif file
 

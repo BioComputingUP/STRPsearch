@@ -107,7 +107,10 @@ def execute_predstrp(
     rprint(f"[bold blue]Temporary directory: {temp_dir}")
     rprint(f"[bold blue]Maximum E-value: {max_eval_p}")
 
-    
+
+
+
+    rprint(f"[bold][{gu.time()}] Running Chainsaw on structures in {structure_dir} ...\n")
     gu.segment_cif_directory(structure_dir,structure_dir)
     # Specify the path to save Foldseek search output
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
