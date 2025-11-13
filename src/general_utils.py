@@ -43,12 +43,15 @@ class ResidueRangeSelect(Select):
         )
 
 def extract_segment_to_cif(pdb_file, chain_id, start_res, end_res, output_file):
-    parser = PDBParser(QUIET=True)
-    structure = parser.get_structure("structure", pdb_file)
-
-    io = MMCIFIO()
-    io.set_structure(structure)
-    io.save(output_file, select=ResidueRangeSelect(chain_id, start_res, end_res))
+    try:
+        parser = PDBParser(QUIET=True)
+        structure = parser.get_structure("structure", pdb_file)
+        io = MMCIFIO()
+        io.set_structure(structure)
+        io.save(output_file, select=ResidueRangeSelect(chain_id, start_res, end_res))
+    except Exception as e:
+        print(f"Error : {e}")
+        return False
 
 def get_chain_id_from_filename(filename):
     """
@@ -191,12 +194,14 @@ def segment_cif_directory(input_dir, output_dir):
                     if not regions:
                         print(f"no segmentation found for {cif_file}")
                     else:
+                        print(f"Segments found for {cif_file}: {regions}")
                         for region in regions:
                             start = region['start']
                             end = region['end']
                             output_cif = os.path.join(
                                 output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
                             )
+                            print(f"Extracting segment: {output_cif} with range {start}-{end}")
                             extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
                         os.remove(cif_path)  # Remove the original .cif file
 
