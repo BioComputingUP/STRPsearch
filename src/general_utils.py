@@ -225,24 +225,6 @@ def segment_cif_directory(input_dir, output_dir):
                     # Delete the temporary .pdb file
                     os.remove(pdb_file)
 
-# Helper function to extract chain ID from filename
-def get_chain_id_from_filename(filename):
-    """
-    Extracts the chain ID from a .cif filename in the format 'id_chainid.cif'.
-
-    Args:
-        filename (str): The name of the .cif file (e.g., '1a0t_P.cif').
-
-    Returns:
-        str: The chain ID extracted from the filename.
-    """
-    base_name = os.path.splitext(filename)[0]
-    parts = base_name.split("_")
-    if len(parts) > 1:
-        return parts[1]  # Chain ID is the second part
-    else:
-        raise ValueError(f"Filename '{filename}' does not contain a chain ID.")
-
 
 def get_res_index(res_num: str, chain_residues: list):
     """
