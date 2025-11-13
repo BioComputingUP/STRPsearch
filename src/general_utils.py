@@ -46,12 +46,29 @@ def extract_segment_to_cif(pdb_file, chain_id, start_res, end_res, output_file):
     try:
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure("structure", pdb_file)
+        
+        # Check chain exists
+        chains = [c.id for c in structure[0]]
+        if chain_id not in chains:
+            print(f"Warning: chain {chain_id} not found in {pdb_file}")
+            return False
+        
+        # Check residues exist
+        residues = [r for r in structure[0][chain_id] if start_res <= r.id[1] <= end_res]
+        if not residues:
+            print(f"Warning: no residues in range {start_res}-{end_res} for chain {chain_id} in {pdb_file}")
+            return False
+        
+        # Save CIF
         io = MMCIFIO()
         io.set_structure(structure)
         io.save(output_file, select=ResidueRangeSelect(chain_id, start_res, end_res))
+        return True
+    
     except Exception as e:
-        print(f"Error : {e}")
+        print(f"Error saving segment {start_res}-{end_res} for chain {chain_id} in {pdb_file}: {e}")
         return False
+
 
 def get_chain_id_from_filename(filename):
     """
