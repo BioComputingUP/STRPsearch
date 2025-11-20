@@ -107,6 +107,7 @@ Which returns the following commands:
 - `--keep-temp / --no-keep-temp`: Whether to keep the temporary directory and files. Default: no-keep-temp
 - `--pymol-pse / --no-pymol-pse`: Whether to create and output PyMOL session files. Default: no-pymol-pse
 - `--help`: Show this message and exit
+- `--db` : Path to databases to use
 
 ## download-pdb
 
