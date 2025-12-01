@@ -100,7 +100,7 @@ Which returns the following commands:
 
 ### Options
 
-- - `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
 - `--chain` (TEXT): Specific chain to query from the structures. Default: all
 - `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
@@ -119,7 +119,7 @@ Which returns the following commands:
 
 ### Options
 
-- - `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
 - `--chain` (TEXT): Specific chain to query from the structures. Default: all
 - `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
@@ -139,7 +139,7 @@ Which returns the following commands:
 
 ### Options
 
-- - `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
 - `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 - `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
