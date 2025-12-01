@@ -56,6 +56,7 @@ def main(
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
     db: str = typer.Option(None, help="Path to the database to use."),
+    chainsaw: bool = typer.Option(False, help="Whether to use Chainsaw for domain trimming.")
 ):
     """
     Main callback to store global options in the context.
@@ -67,6 +68,8 @@ def main(
         "min_height": min_height,
         "keep_temp": keep_temp,
         "pymol_pse": pymol_pse,
+        "db": db,
+        "chainsaw": chainsaw
     }
 
 @app.command()
@@ -80,6 +83,7 @@ def query_file(
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
     db: str = typer.Option(None, help="Path to the database to use."),
+    chainsaw: bool = typer.Option(True, help="Whether to use Chainsaw for domain trimming.")
 ):
     """
     Query an existing PDB/CIF formatted structure file by providing the file path.
@@ -185,7 +189,7 @@ def query_file(
         tul_db=tul_db,
         rul_db=rul_db,
         pdb_id=pdb_id,
-    )
+        chainsaw=chainsaw)
 
 @app.command()
 def download_pdb(

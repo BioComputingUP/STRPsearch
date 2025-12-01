@@ -57,6 +57,7 @@ def execute_predstrp(
         tul_db: str ,
         rul_db: str,
         pdb_id: str,
+        chainsaw: bool
 ):
     """
     Executes the PredSTRP pipeline to identify and analyze repeat regions in protein structures.
@@ -109,9 +110,12 @@ def execute_predstrp(
 
 
 
-
-    rprint(f"[bold][{gu.time()}] Running Chainsaw on structures in {structure_dir} ...\n")
-    gu.segment_cif_directory(structure_dir,structure_dir)
+    #apply chainsaw on structures if specified
+    if chainsaw:
+        rprint(f"[bold][{gu.time()}] Running Chainsaw on structures in {structure_dir} ...\n")
+        gu.segment_cif_directory(structure_dir,structure_dir)
+    
+    
     # Specify the path to save Foldseek search output
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 
