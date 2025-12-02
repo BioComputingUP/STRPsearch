@@ -270,7 +270,7 @@ def download_pdb(
         min_height_p=min_height,
         tul_db=tul_db,
         rul_db=rul_db,
-        chainsaw=chainsaw
+        chainsaw=chainsaw,
         pdb_id=pdb_id
     )
 
