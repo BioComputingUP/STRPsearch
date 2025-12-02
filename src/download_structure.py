@@ -7,7 +7,9 @@ import os
 import gemmi
 import gzip
 import shutil
-
+import warnings
+from Bio import BiopythonWarning
+warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 class ChainSelector(Select):
     """

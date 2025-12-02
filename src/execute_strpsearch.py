@@ -1,5 +1,5 @@
 import json
-from Bio.PDB import MMCIFParser, PDBIO, is_aa, PDBParser
+from Bio.PDB import MMCIFParser, PDBIO, MMCIFIO, is_aa, PDBParser
 from scipy.signal import find_peaks
 from rich import print as rprint
 from . import alignment_utils as au
@@ -12,10 +12,13 @@ import logging
 import shutil
 import typer
 import os
+import warnings
+from Bio import BiopythonWarning
 import time
 import re
 import gemmi
 
+warnings.filterwarnings("ignore", category=BiopythonWarning)
 # Define computational parameters
 distance_p = cfg.distance_p
 frame_step = cfg.frame_step_p
@@ -29,6 +32,7 @@ flexibility_p = 1 - distance_p
 cif_parser = MMCIFParser(QUIET=True)
 pdb_parser = PDBParser(QUIET=True)
 io_handler = PDBIO()
+io_handler_cif = MMCIFIO()
 
 project_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -53,6 +57,7 @@ def execute_predstrp(
         tul_db: str ,
         rul_db: str,
         pdb_id: str,
+        chainsaw: bool
 ):
     """
     Executes the PredSTRP pipeline to identify and analyze repeat regions in protein structures.
@@ -102,8 +107,15 @@ def execute_predstrp(
     rprint(f"[bold blue]Output directory: {out_dir}")
     rprint(f"[bold blue]Temporary directory: {temp_dir}")
     rprint(f"[bold blue]Maximum E-value: {max_eval_p}")
-    rprint(f"[bold blue]Minimum height: {min_height_p}\n")
 
+
+
+    #apply chainsaw on structures if specified
+    if chainsaw:
+        rprint(f"[bold][{gu.time()}] Running Chainsaw on structures in {structure_dir} ...\n")
+        gu.segment_cif_directory(structure_dir,structure_dir)
+    
+    
     # Specify the path to save Foldseek search output
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 
@@ -127,8 +139,10 @@ def execute_predstrp(
         for idx in range(len(target_df)):
             try:
                 row = target_df.iloc[idx]
-                query_id = "_".join(row["query"].split("_")[:-1])
-                query_chain = re.search(r"_([^_]+)$", row["query"]).group(1)
+                query_name_path= row["query"]
+                parts= query_name_path.split("_")
+                query_id =parts[0]
+                query_chain = parts[1]
                 query_name = query_id + "_" + query_chain
                 target_name = row["target"]
                 target_chain = target_name[4]
@@ -156,7 +170,9 @@ def execute_predstrp(
                 rprint(f"[bold blue]Classification: {target_classi}\n")
 
                 # Load query structure and chain
-                query_path = os.path.join(structure_dir, f"{query_name}.cif")
+    
+                query_path = os.path.join(structure_dir, f"{query_name_path}.cif")
+                print(f"Loading query structure from: {query_path}")
                 qstructure = gemmi.read_structure(query_path)
                 qmodel = qstructure[0]
                 qchain_letter = qmodel[0].name
@@ -198,6 +214,10 @@ def execute_predstrp(
                     target_repunit_path=target_repunit_path,
                     usalign_exe_path=cfg.usalign_exe_path
                 )
+                if x is None or y is None or len(x) == 0 or len(y) == 0:
+                    rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
+                           f"TM-score graph data is empty for hit {idx + 1}/{len(target_df)}. Skipping.\n")
+                    continue                
                 if x is None or y is None or len(x) == 0 or len(y) == 0:
                     rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
                            f"TM-score graph data is empty for hit {idx + 1}/{len(target_df)}. Skipping.\n")
@@ -318,7 +338,7 @@ def execute_predstrp(
                     rprint(f"[bold][{gu.time()}][/bold] [bold yellow]"
                            f"No potential repeat region was found with hit "
                            f"{idx + 1}/{len(target_df)}\n")
-            except:
+            except Exception as e:
                 error_count += 1
                 # traceback.print_exc()
                 logging.error(traceback.format_exc())
@@ -332,11 +352,13 @@ def execute_predstrp(
             rprint(f"[bold]"
                    f"[{gu.time()}] "
                    f"Transferring the final results to the output directory ...\n")
+        
 
         # Loop the output directories in the temporary directory
         for temp_query_dir in temp_query_dir_list:
             try:
-                query_name = os.path.basename(temp_query_dir)
+                
+                query_name = "_".join(os.path.basename(temp_query_dir).split("_")[:2])
                 # Create a dict to save certain attributes of the mapped regions
                 # Loop through the outputs in the temporary directory and extract attributes
                 filename_dict = {"query": [], "q_start": [], "q_end": [], "e_value": []}
@@ -391,10 +413,8 @@ def execute_predstrp(
                         dst_name = "_".join(os.path.basename(filepath).split("_")[:-2]) + "." + extension
                         dst_path = os.path.join(out_region_dir, dst_name)
                         shutil.copy(filepath, dst_path)
-
             except Exception as e:
                 error_count += 1
-                # traceback.print_exc()
                 logging.error(traceback.format_exc())
                 rprint(f"[bold yellow]WARNING: Error occurred while transferring files for query directory '{temp_query_dir}': {e}[/bold yellow]")
 

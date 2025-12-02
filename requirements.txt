@@ -6,6 +6,7 @@ requests
 rich
 scipy
 seaborn
+protein-domain-segmentation
 typer[all]
 # Install these using conda
 # conda install -c conda-forge -c bioconda foldseek

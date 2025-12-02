@@ -2,12 +2,225 @@ from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 from datetime import datetime
 from Bio.PDB import Select
+from Bio import BiopythonWarning
 import seaborn as sns
 import numpy as np
 import json
 import os
 import math
+import warnings
 import gemmi
+import re
+from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
+from contextlib import redirect_stdout
+import warnings
+warnings.filterwarnings("ignore", category=BiopythonWarning)
+
+# os.environ["OMP_NUM_THREADS"] = "1"
+# os.environ["OPENBLAS_NUM_THREADS"] = "1"
+# os.environ["MKL_NUM_THREADS"] = "1"
+# os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+# os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
+# import torch
+# torch.set_num_threads(1)
+# torch.set_num_interop_threads(1)
+
+from protein_domain_segmentation import ChainsawCluster
+class ResidueRangeSelect(Select):
+    def __init__(self, chain_id, start_res, end_res):
+        self.chain_id = chain_id
+        self.start_res = start_res
+        self.end_res = end_res
+
+    def accept_chain(self, chain):
+        return chain.id == self.chain_id
+
+    def accept_residue(self, residue):
+        return (
+            residue.get_parent().id == self.chain_id and
+            self.start_res <= residue.id[1] <= self.end_res
+        )
+
+def extract_segment_to_cif(pdb_file, chain_id, start_res, end_res, output_file):
+    try:
+        parser = PDBParser(QUIET=True)
+        structure = parser.get_structure("structure", pdb_file)
+        
+        # Check chain exists
+        chains = [c.id for c in structure[0]]
+        if chain_id not in chains:
+            print(f"Warning: chain {chain_id} not found in {pdb_file}")
+            return False
+        
+        # Check residues exist
+        residues = [r for r in structure[0][chain_id] if start_res <= r.id[1] <= end_res]
+        if not residues:
+            print(f"Warning: no residues in range {start_res}-{end_res} for chain {chain_id} in {pdb_file}")
+            return False
+        
+        # Save CIF
+        io = MMCIFIO()
+        io.set_structure(structure)
+        io.save(output_file, select=ResidueRangeSelect(chain_id, start_res, end_res))
+        return True
+    
+    except Exception as e:
+        print(f"Error saving segment {start_res}-{end_res} for chain {chain_id} in {pdb_file}: {e}")
+        return False
+
+
+def get_chain_id_from_filename(filename):
+    """
+    Extracts the chain ID from a .cif filename in the format '*_chain.cif',
+    taking the last underscore-separated part as the chain ID.
+
+    Args:
+        filename (str): The name of the .cif file (e.g., '1a0t_P.cif' or 'some_file_name_P.cif').
+
+    Returns:
+        str: The chain ID extracted from the filename.
+    """
+    base_name = os.path.splitext(filename)[0]  # Remove extension
+    if "_" not in base_name:
+        raise ValueError(f"Filename '{filename}' does not contain a chain ID.")
+    chain_id = base_name.split("_")[-1]  # Take last part
+    return chain_id
+
+
+
+def extract_regions(region_string):
+    """
+    Extracts start and end values from a region string and returns a list of dictionaries.
+    Handles cases where residue numbers may have insertion codes (e.g., 365I).
+    """
+    if not region_string:
+        return [] 
+
+    regions = region_string.split(",")
+    result = []
+    for region in regions:
+        regions_l = region.split("_")
+        for reg in regions_l:
+            parts = [p for p in reg.split("-") if p]  # Remove empty strings
+            if len(parts) >= 2:
+                # Extract only the numeric part for start and end
+                def extract_num(s):
+                    m = re.match(r"(\d+)", s)
+                    return int(m.group(1)) if m else None
+                start = extract_num(parts[0])
+                end = extract_num(parts[1])
+                if start is not None and end is not None:
+                    result.append({"start": start, "end": end})
+                else:
+                    print(f"Skipping malformed region: {reg}")
+            else:
+                print(f"Skipping malformed region: {reg}")
+
+    return result
+
+def is_polymer_chain_cif(filepath):
+    """
+    Détermine si un fichier .cif correspond à une chaîne protéique (ou un polymère biologique).
+    Retourne True s'il s'agit d'une chaîne (avec des résidus comme ALA, GLY...), False sinon.
+    """
+    try:
+        with open(filepath, 'r') as file:
+            has_residues = False
+            for line in file:
+                # Cherche les lignes ATOM (et pas HETATM)
+                if line.startswith("ATOM"):
+                    # Vérifie si le résidu appartient à une chaîne classique d'acides aminés
+                    tokens = line.split()
+                    if len(tokens) > 5:
+                        residue = tokens[5]
+                        if residue in {
+                            "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU",
+                            "GLY", "HIS", "ILE", "LEU", "LYS", "MET", "PHE",
+                            "PRO", "SER", "THR", "TRP", "TYR", "VAL"
+                        }:
+                            has_residues = True
+                            break
+            return has_residues
+    except Exception as e:
+        print(f"Error : {e}")
+        return False
+
+
+
+def segment_cif_directory(input_dir, output_dir):
+    """
+    Processes a directory of .cif files, applies Chainsaw to predict chopping regions,
+    extracts segments, and deletes temporary .pdb files.
+
+    Args:
+        input_dir (str): Path to the directory containing .cif files.
+        output_dir (str): Path to the directory where output .cif files will be saved.
+    """
+    # os.makedirs(output_dir, exist_ok=True)  # Ensure the output directory exists
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        chainsaw_cluster = ChainsawCluster()  # Initialize ChainsawCluster
+        for cif_file in os.listdir(input_dir):
+            
+            if cif_file.endswith(".cif"):
+                cif_path = os.path.join(input_dir, cif_file)
+                if is_polymer_chain_cif(cif_path):
+                    chain_id = get_chain_id_from_filename(cif_file)  # Extract chain ID from filename
+                    print(f"Processing {cif_file} for chain {chain_id}...")
+                    pdb_file = cif_path.replace(".cif", ".pdb")  # Temporary .pdb file path
+
+                    # Convert .cif to .pdb
+                    parser = MMCIFParser(QUIET=True)
+                    
+                    try:
+                        structure = parser.get_structure("cif_file", cif_path)
+                    except IndexError as e:
+                        print(f"IndexError while parsing {cif_file}: {e}")
+                        return False  # or handle as appropriate
+                    except KeyError as e:
+                        print(f"KeyError while parsing {cif_file}: {e}")
+                        return False
+                    except Exception as e:
+                        print(f"Unexpected error while parsing {cif_file}: {e}")
+                        return False
+                    for model in structure:
+                        chains_to_remove = [chain for chain in model if len(chain.id) > 1]
+                        for chain in chains_to_remove:
+                            print(f"Skipping chain id '{chain.id}' (invalid for PDB format).")
+                            model.detach_child(chain.id)
+                    io = PDBIO()
+                    io.set_structure(structure)
+                    io.save(pdb_file)
+                    # Apply Chainsaw to predict chopping regions
+                    with open(os.devnull, 'w') as devnull:
+                        with redirect_stdout(devnull):
+                            try:
+                                chainsaw_result = chainsaw_cluster.predict_from_pdb(pdb_file)
+                            except RuntimeError as e:
+                                print(f"RuntimeError during Chainsaw prediction for {pdb_file}: {e}")
+                                continue  # Skip this file and continue with the next
+                            except Exception as e:
+                                print(f"Unexpected error during Chainsaw prediction for {pdb_file}: {e}")
+                                continue
+                    # Extract regions from Chainsaw results
+                    regions = extract_regions(chainsaw_result)
+
+                    # Extract segments for each region
+                    if not regions:
+                        print(f"no segmentation found for {cif_file}")
+                    else:
+                        for region in regions:
+                            start = region['start']
+                            end = region['end']
+                            output_cif = os.path.join(
+                                output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
+                            )
+                            extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
+                        os.remove(cif_path)  # Remove the original .cif file
+
+                    # Delete the temporary .pdb file
+                    os.remove(pdb_file)
 
 
 def get_res_index(res_num: str, chain_residues: list):
@@ -361,6 +574,8 @@ def plot_tmscore_graph(x, y, region_components, out_path):
     plt.savefig(out_path, format="png")
     plt.close(fig)
 
+    plt.close(fig)
+
 
 
 def smooth_graph(y, target_avg_len, window_p):
@@ -372,6 +587,8 @@ def smooth_graph(y, target_avg_len, window_p):
     window_size = round(target_avg_len * window_p)
     if window_size % 2 == 0:
         window_size -= 1
+    # Ensure window_size is at least 3 and not greater than len(y)
+    window_size = max(3, min(window_size, len(y) if len(y) % 2 == 1 else len(y) - 1))
     # Ensure window_size is at least 3 and not greater than len(y)
     window_size = max(3, min(window_size, len(y) if len(y) % 2 == 1 else len(y) - 1))
 

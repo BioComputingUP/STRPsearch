@@ -4,8 +4,9 @@ import numpy as np
 import os
 from src.usalign import Usalign
 from Bio.PDB import Select
-
-
+import warnings
+from Bio import BiopythonWarning
+warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 
 def search_tul(foldseek_exe_path, query_dir, tul_fs_db, output_file, temp_dir):
@@ -77,18 +78,14 @@ def find_target(output_file, max_eval):
     try:
         df = pd.read_csv(output_file, delimiter="\t", header=None, dtype={"ctr": str})
     except Exception as e:
-        # Log error and return empty result
         print(f"WARNING: Could not read Foldseek output file '{output_file}': {e}")
-        return False, pd.DataFrame()
-    
+        return False,0
     df = pd.read_csv(output_file, delimiter="\t", header=None, dtype={"ctr": str})
     df.columns = ["query", "target", "e_value", "q_start", "q_end"]
     df = df[df["e_value"] <= max_eval]
 
     if len(df) == 0:
         return False, df
-
-    # Extract class topology (ct) and average length from the target column
     try:
         parts= df['target'].str.split('_', expand=True)
         df['t_ct'] = parts[3]
@@ -123,7 +120,6 @@ def find_target(output_file, max_eval):
 
 
 
-
 def get_tmscore_graph_data_us(query_name, fragment_path_list, target_repunit_path, usalign_exe_path):
     """
     Generates TM-score graph data by aligning structure fragments with the target structure using US-align.
@@ -137,12 +133,18 @@ def get_tmscore_graph_data_us(query_name, fragment_path_list, target_repunit_pat
         try:
             command_output = usalign(target_repunit_path, fragment_path)
         except Exception as e:
-            print(f"WARNING: US-align failed for fragment {fragment_path}: {e}")
-            continue    
-
+            print(f"WARNING: US-align failed for {fragment_path}: {e}")
+            continue
         # Parse TM-score from US-align output
         tm_score = None
         for line in command_output.splitlines():
+            try:
+                if line.startswith('TM-score='):
+                    tm_score = float(line.split('=')[1].split()[0])
+                    break
+            except Exception as e:
+                print(f"WARNING: Failed to parse TM-score from US-align output: {e}")
+                tm_score = None
             try:
                 if line.startswith('TM-score='):
                     tm_score = float(line.split('=')[1].split()[0])

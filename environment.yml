@@ -1,6 +1,7 @@
-name: strpsearch_env_fix_yousra
+name: strpsearch_env_ch_before
 channels:
   - bioconda
+  - schrodinger
   - conda-forge
   - defaults
 dependencies:
@@ -15,9 +16,12 @@ dependencies:
   - matplotlib
   - seaborn
   - scipy
+  - pip
   - foldseek
   - tmalign
   - usalign
   - gemmi
   - typing_extensions
   - biopython
+  - pip:
+      - protein-domain-segmentation

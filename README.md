@@ -43,7 +43,7 @@ python3 ./bin/strpsearch.py [OPTIONS] COMMAND [ARGS]...
 
 ```
 conda env create -f environment.yml
-conda activate strpsearch_env_fix_yousra
+conda activate strpsearch_env_ch_before
 ```
 
 2. Navigate to the main directory of the project and run the software with the following command:
@@ -100,7 +100,9 @@ Which returns the following commands:
 
 ### Options
 
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
 - `--chain` (TEXT): Specific chain to query from the structures. Default: all
+- `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 - `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 - `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
@@ -118,7 +120,9 @@ Which returns the following commands:
 
 ### Options
 
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
 - `--chain` (TEXT): Specific chain to query from the structures. Default: all
+- `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 - `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 - `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
@@ -136,6 +140,8 @@ Which returns the following commands:
 
 ### Options
 
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
+- `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 - `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
 - `--min-height` (FLOAT): Minimum height of TM-score signals to be processed. Default: 0.4
