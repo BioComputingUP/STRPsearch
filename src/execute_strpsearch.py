@@ -1,5 +1,5 @@
 import json
-from Bio.PDB import MMCIFParser, PDBIO, MMCIFIO, is_aa, PDBParser
+from Bio.PDB import MMCIFParser, PDBIO, MMCIFIO, PDBParser
 from scipy.signal import find_peaks
 from rich import print as rprint
 from . import alignment_utils as au
@@ -15,7 +15,6 @@ import os
 import warnings
 from Bio import BiopythonWarning
 import time
-import re
 import gemmi
 
 warnings.filterwarnings("ignore", category=BiopythonWarning)

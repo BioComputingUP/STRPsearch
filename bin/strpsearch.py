@@ -3,7 +3,6 @@ import sys
 import tempfile
 import typer
 from rich import print as rprint
-from typing_extensions import Annotated
 import mimetypes
 from Bio.PDB import PDBParser
 pdbparser=PDBParser()
@@ -28,7 +27,7 @@ def version():
     """
     Show the version of the application and exit.
     """
-    rprint(f"[bold green]RepeatsDB Lite 2, version: {__version__}[/bold green]\n")
+    rprint(f"[bold green]STRPsearch Lite 2, version: {__version__}[/bold green]\n")
     raise typer.Exit()
 
 def validate_min_height(value: str) -> float:
@@ -202,6 +201,7 @@ def download_pdb(
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
     db: str = typer.Option(None, help="Path to the database to use."),
+    chainsaw: bool = typer.Option(False, help="Whether to use Chainsaw for domain trimming.")
 ):
     """
     Download and query a structure from the PDB database by providing the PDB ID and the specific chain of interest.
@@ -270,6 +270,8 @@ def download_pdb(
         min_height_p=min_height,
         tul_db=tul_db,
         rul_db=rul_db,
+        chainsaw=chainsaw
+        pdb_id=pdb_id
     )
 
 
@@ -284,6 +286,7 @@ def download_model(
     keep_temp: bool = typer.Option(cfg.keep_temp, help="Whether to keep the temporary directory and files."),
     pymol_pse: bool = typer.Option(cfg.pymol_pse, help="Whether to create and output PyMOL session files."),
     db: str = typer.Option(None, help="Path to the database to use."),
+    chainsaw: bool = typer.Option(False, help="Whether to use Chainsaw for domain trimming.")
 ):
      # Determine database paths
     if db:
@@ -338,6 +341,8 @@ def download_model(
         min_height_p=min_height,
         tul_db=tul_db,
         rul_db=rul_db,
+        chainsaw=chainsaw
+        pdb_id=uniprot_id
     )
 
 
