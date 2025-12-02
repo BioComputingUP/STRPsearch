@@ -141,7 +141,6 @@ def query_file(
             for attempt in range(1, max_retries + 1):
                 try:
                     success , pdb_id= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
-                    print(pdb_id)
                     break  # Success, exit the retry loop
                 except Exception as e:
                     rprint(f"[bold yellow]Attempt {attempt} failed to extract chains: {e}[/bold yellow]")

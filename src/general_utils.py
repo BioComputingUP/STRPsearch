@@ -16,15 +16,6 @@ from contextlib import redirect_stdout
 import warnings
 warnings.filterwarnings("ignore", category=BiopythonWarning)
 
-# os.environ["OMP_NUM_THREADS"] = "1"
-# os.environ["OPENBLAS_NUM_THREADS"] = "1"
-# os.environ["MKL_NUM_THREADS"] = "1"
-# os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-# os.environ["NUMEXPR_NUM_THREADS"] = "1"
-
-# import torch
-# torch.set_num_threads(1)
-# torch.set_num_interop_threads(1)
 
 from protein_domain_segmentation import ChainsawCluster
 class ResidueRangeSelect(Select):
@@ -167,7 +158,6 @@ def segment_cif_directory(input_dir, output_dir):
                 cif_path = os.path.join(input_dir, cif_file)
                 if is_polymer_chain_cif(cif_path):
                     chain_id = get_chain_id_from_filename(cif_file)  # Extract chain ID from filename
-                    print(f"Processing {cif_file} for chain {chain_id}...")
                     pdb_file = cif_path.replace(".cif", ".pdb")  # Temporary .pdb file path
 
                     # Convert .cif to .pdb

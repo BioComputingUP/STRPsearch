@@ -84,12 +84,12 @@ To list the available commands run:
 
 Which returns the following commands:
 
-| Command          | Description                                                                                             |
-| ---------------- | ------------------------------------------------------------------------------------------------------- |
-| `query-file`     | Query an existing PDB/CIF formatted structure file by providing the file path                           |
-| `download-pdb`   | Download and query a structure from PDB by providing the PDB ID and the specific Chain of interest      |
-| `download-model` | Download and query an AlphaFold model by providing the UniProt ID and the AlphaFold version of interest |
-| `version`        | Show the version and exit                                                                               |
+| Command          | Description                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `query-file`     | Query an existing PDB/CIF formatted structure file by providing the file path                                    |
+| `download-pdb`   | Download CIF file and query a structure from PDB by providing the PDB ID and the specific Chain of interest      |
+| `download-model` | Download CIF file and query an AlphaFold model by providing the UniProt ID and the AlphaFold version of interest |
+| `version`        | Show the version and exit                                                                                        |
 
 ## query-file
 
@@ -100,7 +100,7 @@ Which returns the following commands:
 
 ### Options
 
-- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not. Default: no-chainsaw
 - `--chain` (TEXT): Specific chain to query from the structures. Default: all
 - `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
@@ -120,7 +120,7 @@ Which returns the following commands:
 
 ### Options
 
-- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not. Default: no-chainsaw
 - `--chain` (TEXT): Specific chain to query from the structures. Default: all
 - `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
@@ -140,7 +140,7 @@ Which returns the following commands:
 
 ### Options
 
-- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not
+- `--chainsaw / --no-chainsaw` (BOOL): Whether to use chainsaw segmentation tool or not. Default: no-chainsaw
 - `--db` (TEXT) : Path to the databases to use. Default: data/databases
 - `--temp-dir` (TEXT): Path to the temporary directory. Default: /tmp
 - `--max-eval` (FLOAT): Maximum E-value of the targets to prefilter. Default: 0.01
@@ -163,17 +163,17 @@ conda install -c conda-forge pymol-open-source
 If you already have a PDB/CIF formatted structure file, and you want to query all the chains in the structure, keeping temporary directory and files:
 
 ```
-python3 ./bin/strpsearch.py query-file /input/file /output/directory --keep-temp
+python3 ./bin/strpsearch.py query-file /input/file output/directory --keep-temp
 ```
 
 If you want to automatically download and query a specific experimental structure from PDB (e.g. chain B of PDB structure 1A0R), without keeping temporary directory and files:
 
 ```
-python3 ./bin/strpsearch.py download-pdb 1a0r /output/directory --chain B
+python3 ./bin/strpsearch.py download-pdb 1a0r output/directory --chain B
 ```
 
 If you want to automatically download and query a predicted-model from AlphaFold (e.g. UniProt ID: Q9HXJ7)
 
 ```
-python3 ./bin/strpsearch.py download-model Q9HXJ7 /output/directory
+python3 ./bin/strpsearch.py download-model Q9HXJ7 output/directory --chainsaw
 ```
