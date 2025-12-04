@@ -160,10 +160,10 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
         if chain.lower() not in chain_list_lower:
             print(f"Chain '{chain}' not found. Available: {', '.join(sorted(chain_list_lower))}")
             return False, pdb_id
-        chain_list = [chain]
+        chain_list_lower = [chain]
 
     # Save each selected chain
-    for ch_id in chain_list:
+    for ch_id in chain_list_lower:
         try:
             new_structure = gemmi.Structure()
             new_model = gemmi.Model(1)
