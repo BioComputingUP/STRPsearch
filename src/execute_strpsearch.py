@@ -137,11 +137,12 @@ def execute_predstrp(
 
         for idx in range(len(target_df)):
             try:
+                
                 row = target_df.iloc[idx]
                 query_name_path= row["query"]
                 parts= query_name_path.split("_")
-                query_id =parts[0]
-                query_chain = parts[1]
+                query_id =parts[1]
+                query_chain = parts[2]
                 query_name = query_id + "_" + query_chain
                 target_name = row["target"]
                 target_chain = target_name[4]
