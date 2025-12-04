@@ -151,26 +151,26 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
     except Exception as e:
         print(f"Error determining file type: {e}")
         return False, pdb_id
-
+    available_chains_map = {ch.lower(): ch for ch in available_chains}
     # Handle chain selection
     if chain == "all":
         chain_list = list(available_chains)
-        chain_list_lower=[x.lower() for x in chain_list]
     else:
-        if chain.lower() not in chain_list_lower:
-            print(f"Chain '{chain}' not found. Available: {', '.join(sorted(chain_list_lower))}")
+        chain_lower = chain.lower()
+
+        if chain_lower not in available_chains_map:
+            print(f"Chain '{chain}' not found. Available: {', '.join(sorted(available_chains_map))}")
             return False, pdb_id
-        chain_list_lower = [chain]
+        chain_list = [available_chains_map[chain_lower]]
 
     # Save each selected chain
-    for ch_id in chain_list_lower:
+    for ch_id in chain_list:
         try:
             new_structure = gemmi.Structure()
             new_model = gemmi.Model(1)
             target_chain = model[ch_id]
             new_model.add_chain(target_chain)
             new_structure.add_model(new_model)
-
             output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
             new_structure.make_mmcif_document().write_file(output_path)
         except Exception as e:
@@ -180,7 +180,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
         try: os.remove(decompressed_file)
         except Exception: pass
 
-    return True, pdb_id
+    return True, pdb_id, ch_id
 
 
 
@@ -222,14 +222,14 @@ def download_pdb_structure(pdb_id, out_dir, temp_dir, chain=None):
                f"PDB structure {pdb_id_lower} was downloaded successfully")
 
     # Extract the desired chain(s) using the extract_chains function
-    success = extract_chains(
+    success, pdb_id,chain_id = extract_chains(
         input_file=temp_structure_path,
         chain=chain,
         out_dir=out_dir,
         temp_dir=temp_dir
     )
 
-    return success
+    return success,chain_id
 
 
 def download_alphafold_structure(uniprot_id, alphafold_version, out_dir):

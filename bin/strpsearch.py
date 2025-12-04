@@ -237,14 +237,15 @@ def download_pdb(
     os.makedirs(query_dir, exist_ok=True)
 
     # Download the PDB structure
-    success = ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+    success, ch_id = ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
     if not success:
         sys.exit()
 
     # If a specific chain is requested, verify its file exists
     if chain and chain.lower() != "all":
-        chain_file = os.path.join(query_dir, f"{pdb_id}_{chain}.cif")
+        chain_file = os.path.join(query_dir, f"{pdb_id}_{ch_id}.cif")
         if not os.path.isfile(chain_file):
+            print(chain_file)
             rprint(f"[bold red]❌ Chain '{chain}' not found in the {query_dir}.[/bold red]")
             rprint(f"[bold red]Make sure the chain ID exists in the input Protein: {pdb_id}[/bold red]")
             sys.exit(1)
