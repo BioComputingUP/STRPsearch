@@ -134,15 +134,13 @@ def execute_predstrp(
     if found_hit:
         temp_query_dir_list = []
         error_count = 0
-
         for idx in range(len(target_df)):
             try:
-                
                 row = target_df.iloc[idx]
                 query_name_path= row["query"]
                 parts= query_name_path.split("_")
-                query_id =parts[1]
-                query_chain = parts[2]
+                query_id =pdb_id
+                query_chain = parts[-1]
                 query_name = query_id + "_" + query_chain
                 target_name = row["target"]
                 target_chain = target_name[4]
@@ -172,7 +170,6 @@ def execute_predstrp(
                 # Load query structure and chain
     
                 query_path = os.path.join(structure_dir, f"{query_name_path}.cif")
-                print(f"Loading query structure from: {query_path}")
                 qstructure = gemmi.read_structure(query_path)
                 qmodel = qstructure[0]
                 qchain_letter = qmodel[0].name
@@ -340,7 +337,6 @@ def execute_predstrp(
                            f"{idx + 1}/{len(target_df)}\n")
             except Exception as e:
                 error_count += 1
-                # traceback.print_exc()
                 logging.error(traceback.format_exc())
                 rprint(f"[bold yellow]WARNING: Error occurred in hit {idx+1}/{len(target_df)}: {e}[/bold yellow]")
 

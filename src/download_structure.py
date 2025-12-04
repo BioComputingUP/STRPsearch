@@ -154,6 +154,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
     available_chains_map = {ch.lower(): ch for ch in available_chains}
     # Handle chain selection
     if chain == "all":
+        print("here")
         chain_list = list(available_chains)
     else:
         chain_lower = chain.lower()
@@ -165,6 +166,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
 
     # Save each selected chain
     for ch_id in chain_list:
+        print(ch_id)
         try:
             new_structure = gemmi.Structure()
             new_model = gemmi.Model(1)
