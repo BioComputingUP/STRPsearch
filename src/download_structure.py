@@ -117,7 +117,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
         block = doc.sole_block()
         structure = gemmi.make_structure_from_block(block)
         model = structure[0]
-        available_chains = {(ch.name).lower() for ch in model}
+        available_chains = {ch.name for ch in model}
 
         # ✅ Extract PDB ID (if available)
         pdb_id = block.find_value('_entry.id')
@@ -155,9 +155,10 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
     # Handle chain selection
     if chain == "all":
         chain_list = list(available_chains)
+        chain_list_lower=[x.lower() for x in chain_list]
     else:
-        if chain.lower() not in available_chains:
-            print(f"Chain '{chain}' not found. Available: {', '.join(sorted(available_chains))}")
+        if chain.lower() not in chain_list_lower:
+            print(f"Chain '{chain}' not found. Available: {', '.join(sorted(chain_list_lower))}")
             return False, pdb_id
         chain_list = [chain]
 
