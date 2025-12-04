@@ -117,7 +117,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
         block = doc.sole_block()
         structure = gemmi.make_structure_from_block(block)
         model = structure[0]
-        available_chains = {ch.name.lower() for ch in model}
+        available_chains = {(ch.name).lower() for ch in model}
 
         # ✅ Extract PDB ID (if available)
         pdb_id = block.find_value('_entry.id')
