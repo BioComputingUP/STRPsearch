@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import sys
 import tempfile
 import typer
@@ -8,7 +8,7 @@ from Bio.PDB import PDBParser
 pdbparser=PDBParser()
 from Bio.PDB import MMCIFParser
 cifprarser=MMCIFParser()
-
+import glob
 # Add parent directory to sys.path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')))
 
@@ -87,60 +87,95 @@ def query_file(
     """
     Query an existing PDB/CIF formatted structure file by providing the file path.
     """
-     # Determine database paths
+    # Determine database paths
     if db:
         tul_db = os.path.join(db, "tul_foldseek_db", "db")
         rul_db = os.path.join(db, "rul_structure_db")
     else:
         tul_db = os.path.join(cfg.project_root, "data", "databases", "tul_foldseek_db", "db")
         rul_db = os.path.join(cfg.project_root, "data", "databases", "rul_structure_db")
-
-    # Ensure the output directory exists
-    if os.path.exists(out_dir):
-        rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
-    else:
-        os.makedirs(out_dir)
-
-    # Ensure the temporary directory exists
-    if not os.path.exists(temp_dir):
-        try:
-            os.makedirs(temp_dir)
-            rprint(f"[bold yellow]Created temporary directory: {temp_dir}[/bold yellow]")
-        except Exception as e:
-            rprint(f"[bold red]Failed to create temporary directory '{temp_dir}': {e}[/bold red]")
-            sys.exit(1)
-
-
-
-    # Validate the input file
+    #verify if query file exists
     if not os.path.exists(input_file):
         rprint(f"[bold red]Input file does not exist: {input_file}[/bold red]")
         sys.exit()
 
-    # Prepare the output directory structure
+    #get name of input file
     input_filename = os.path.basename(input_file)
-    parts=input_filename.split(".")
-    input_name = parts[0]
-    out_dir = os.path.join(out_dir, input_name)
-    query_dir = os.path.join(out_dir, "query_structures")
-    os.makedirs(query_dir, exist_ok=True)
-
-    # Clean the query directory before use
-    if os.path.exists(query_dir):
-        for f in os.listdir(query_dir):
-            os.remove(os.path.join(query_dir, f))
+    head, tail=os.path.split(input_filename)
+    input_file_name=tail.split('.')[0]
+    #verify type of query file
     mime_type, encoding = mimetypes.guess_type(input_file)
     if mime_type:
+        #if the file if pdb type
         if "pdb" in mime_type or input_file.endswith(".ent.gz") or input_filename.endswith(".ent"):
-            pdb_id = ds.extract_structure_and_chains(input_file)[0]
+
+            pdb_id = ds.extract_structure_and_chains(input_file)[0]#get pdb id from pdb file
+            input_name=pdb_id
+            out_dir = os.path.join(out_dir, input_name) #construct outdir path as /out_dir/input_name
+            print(out_dir)
+            #check if output directory exists:
+            if os.path.exists(out_dir):
+                #if it does then clear it and reuse it
+                print(f"alredy exists {out_dir}")
+                rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
+                for filen in os.listdir(out_dir):
+                    file_path=os.path.join(out_dir,filen)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.unlink(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as e:
+                        print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+            else:
+                #if not create one
+                os.makedirs(out_dir)
+            
+            #creates temporary directory:
+            if not os.path.exists(temp_dir):
+                try:
+                    os.makedirs(temp_dir)
+                    rprint(f"[bold yellow]Created temporary directory: {temp_dir}[/bold yellow]")
+                except Exception as e:
+                    rprint(f"[bold red]Failed to create temporary directory '{temp_dir}': {e}[/bold red]")
+                    sys.exit(1)
+            query_dir = os.path.join(out_dir, "query_structures")
+            os.makedirs(query_dir, exist_ok=True)
             success= ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
             
         elif "cif" in mime_type:
-    # Extract chains from the input file
             max_retries = 3
             for attempt in range(1, max_retries + 1):
                 try:
+                    pdb_id = ds.extract_structure_and_chains_cif(input_file)#get pdb id from pdb file
+                    input_name=pdb_id
+                    out_dir = os.path.join(out_dir, input_name)
+                    print(out_dir)
+                    if os.path.exists(out_dir):
+                        rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
+                        for filen in os.listdir(out_dir):
+                            file_path=os.path.join(out_dir,filen)
+                            try:
+                                if os.path.isfile(file_path) or os.path.islink(file_path):
+                                    os.unlink(file_path)
+                                elif os.path.isdir(file_path):
+                                    shutil.rmtree(file_path)
+                            except Exception as e:
+                                print('Failed to delete %s. Reason: %s' % (file_path, e))
+                    else:
+                        os.makedirs(out_dir)
+                    if not os.path.exists(temp_dir):
+                        try:
+                            os.makedirs(temp_dir)
+                            rprint(f"[bold yellow]Created temporary directory: {temp_dir}[/bold yellow]")
+                        except Exception as e:
+                            rprint(f"[bold red]Failed to create temporary directory '{temp_dir}': {e}[/bold red]")
+                            sys.exit(1)
+                    query_dir = os.path.join(out_dir, "query_structures")
+                    os.makedirs(query_dir, exist_ok=True)
                     success , pdb_id, test= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+                    
                     break  # Success, exit the retry loop
                 except Exception as e:
                     rprint(f"[bold yellow]Attempt {attempt} failed to extract chains: {e}[/bold yellow]")
@@ -156,11 +191,11 @@ def query_file(
         return False
     if not success:
         rprint("[bold red]Chain extraction failed.[/bold red]")
-        return
-
+        return 
+    
     # If a specific chain is requested, verify its file exists
     if chain and chain.lower() != "all":
-        chain_file = os.path.join(query_dir, f"{input_name}_{chain}.cif")
+        chain_file = os.path.join(query_dir, f"{input_file_name}_{chain}.cif")
         if not os.path.isfile(chain_file):
             rprint(f"[bold red]❌ Chain '{chain}' not found in the structure.[/bold red]")
             rprint(f"[bold red]Make sure the chain ID exists in the input file: {input_file}[/bold red]")

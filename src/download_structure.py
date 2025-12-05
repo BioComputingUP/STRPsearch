@@ -1,14 +1,8 @@
 from Bio.PDB import MMCIFParser, PDBParser, Select
 from . import general_utils as gu
 from rich import print as rprint
-import mimetypes
-import requests
-import os
-import gemmi
-import gzip
-import shutil
-import warnings
 from Bio import BiopythonWarning
+import os, gzip, shutil, mimetypes, requests, gemmi, warnings
 warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 class ChainSelector(Select):
@@ -24,6 +18,21 @@ class ChainSelector(Select):
         Accept only the target chain for saving.
         """
         return chain.get_id() == self.target_chain and chain.get_parent().id == 0
+
+def extract_structure_and_chains_cif(cif_file):
+    pdb_id=None
+    filename = os.path.basename(cif_file)[:-4]
+    doc = gemmi.cif.read_file(cif_file)
+    block = doc.sole_block()
+
+        # Extract PDB ID (if available)
+    pdb_id = block.find_value('_entry.id')
+    print(pdb_id)
+    if not pdb_id or pdb_id == '?':
+        # fallback: try filename if ID not present
+        pdb_id = filename
+    return pdb_id
+
 
 def extract_structure_and_chains(pdb_file):
     """
@@ -86,11 +95,8 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
             - True if extraction is successful, False otherwise.
             - PDB ID string extracted from the CIF file (or None if unavailable).
     """
-    import os, gzip, shutil, mimetypes
-    import gemmi
-    from Bio.PDB import PDBParser, MMCIFParser
 
-    pdb_id = None  # <--- will store the extracted PDB ID
+    pdb_id = None
     os.makedirs(temp_dir, exist_ok=True)
 
     decompressed_file = None

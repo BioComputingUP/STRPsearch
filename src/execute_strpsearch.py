@@ -134,6 +134,7 @@ def execute_predstrp(
     if found_hit:
         temp_query_dir_list = []
         error_count = 0
+        print(target_df)
         for idx in range(len(target_df)):
             try:
                 row = target_df.iloc[idx]
