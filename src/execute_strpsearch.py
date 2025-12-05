@@ -1,4 +1,3 @@
-import json
 from Bio.PDB import MMCIFParser, PDBIO, MMCIFIO, PDBParser
 from scipy.signal import find_peaks
 from rich import print as rprint
@@ -6,16 +5,8 @@ from . import alignment_utils as au
 from . import general_utils as gu
 from . import config as cfg
 import pandas as pd
-import traceback
-import tempfile
-import logging
-import shutil
-import typer
-import os
-import warnings
+import traceback, tempfile, logging, shutil, typer, os, warnings, time, gemmi, json
 from Bio import BiopythonWarning
-import time
-import gemmi
 
 warnings.filterwarnings("ignore", category=BiopythonWarning)
 # Define computational parameters

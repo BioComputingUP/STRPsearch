@@ -1,14 +1,10 @@
-import os, shutil
-import sys
-import tempfile
-import typer
+import os, shutil, sys, tempfile, typer, mimetypes
 from rich import print as rprint
-import mimetypes
 from Bio.PDB import PDBParser
 pdbparser=PDBParser()
 from Bio.PDB import MMCIFParser
 cifprarser=MMCIFParser()
-import glob
+
 # Add parent directory to sys.path to allow importing from src
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')))
 
@@ -103,16 +99,16 @@ def query_file(
     input_filename = os.path.basename(input_file)
     head, tail=os.path.split(input_filename)
     input_file_name=tail.split('.')[0]
+
     #verify type of query file
     mime_type, encoding = mimetypes.guess_type(input_file)
     if mime_type:
         #if the file if pdb type
         if "pdb" in mime_type or input_file.endswith(".ent.gz") or input_filename.endswith(".ent"):
-
-            pdb_id = ds.extract_structure_and_chains(input_file)[0]#get pdb id from pdb file
+            #extract pdb id from pdb file
+            pdb_id = ds.extract_structure_and_chains(input_file)[0]
             input_name=pdb_id
             out_dir = os.path.join(out_dir, input_name) #construct outdir path as /out_dir/input_name
-            print(out_dir)
             #check if output directory exists:
             if os.path.exists(out_dir):
                 #if it does then clear it and reuse it
@@ -127,7 +123,7 @@ def query_file(
                             shutil.rmtree(file_path)
                     except Exception as e:
                         print('Failed to delete %s. Reason: %s' % (file_path, e))
-
+            #else then creates it
             else:
                 #if not create one
                 os.makedirs(out_dir)
@@ -140,18 +136,20 @@ def query_file(
                 except Exception as e:
                     rprint(f"[bold red]Failed to create temporary directory '{temp_dir}': {e}[/bold red]")
                     sys.exit(1)
+            #creates the query directory
             query_dir = os.path.join(out_dir, "query_structures")
             os.makedirs(query_dir, exist_ok=True)
+            #download the cif file of the coressponding pdb structure
             success= ds.download_pdb_structure(pdb_id=pdb_id, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
-            
+        #if CIF file  
         elif "cif" in mime_type:
-            max_retries = 3
-            for attempt in range(1, max_retries + 1):
-                try:
-                    pdb_id = ds.extract_structure_and_chains_cif(input_file)#get pdb id from pdb file
+                    #get pdb id from pdb file
+                    pdb_id = ds.extract_structure_and_chains_cif(input_file)
                     input_name=pdb_id
                     out_dir = os.path.join(out_dir, input_name)
+                    #check if output directory exists:
                     if os.path.exists(out_dir):
+                        #if it does then clear it and reuse it
                         rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
                         for filen in os.listdir(out_dir):
                             file_path=os.path.join(out_dir,filen)
@@ -162,8 +160,10 @@ def query_file(
                                     shutil.rmtree(file_path)
                             except Exception as e:
                                 print('Failed to delete %s. Reason: %s' % (file_path, e))
+                    #else then creates it
                     else:
                         os.makedirs(out_dir)
+                    #creates temporary directory:
                     if not os.path.exists(temp_dir):
                         try:
                             os.makedirs(temp_dir)
@@ -171,17 +171,21 @@ def query_file(
                         except Exception as e:
                             rprint(f"[bold red]Failed to create temporary directory '{temp_dir}': {e}[/bold red]")
                             sys.exit(1)
+                    #creates query directory:
                     query_dir = os.path.join(out_dir, "query_structures")
                     os.makedirs(query_dir, exist_ok=True)
-                    success , pdb_id, test= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
-                    
-                    break  # Success, exit the retry loop
-                except Exception as e:
-                    rprint(f"[bold yellow]Attempt {attempt} failed to extract chains: {e}[/bold yellow]")
-                    success = False
-                    if attempt == max_retries:
-                        rprint(f"[bold red]All {max_retries} attempts failed. Exiting.[/bold red]")
-                        sys.exit(0)
+                    max_retries = 3
+                    for attempt in range(1, max_retries + 1):
+                        try:
+                            #extract vailable chains
+                            success , pdb_id, test= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+                            break  # Success, exit the retry loop
+                        except Exception as e:
+                            rprint(f"[bold yellow]Attempt {attempt} failed to extract chains: {e}[/bold yellow]")
+                            success = False
+                            if attempt == max_retries:
+                                rprint(f"[bold red]All {max_retries} attempts failed. Exiting.[/bold red]")
+                                sys.exit(0)
         else:
             rprint(f"[bold red]Only PDB / mmCIF format is accepted for query files[bold red]\n")
             return False
@@ -196,7 +200,7 @@ def query_file(
     if chain and chain.lower() != "all":
         chain_file = os.path.join(query_dir, f"{input_file_name}_{chain}.cif")
         if not os.path.isfile(chain_file):
-            rprint(f"[bold red]❌ Chain '{chain}' not found in the structure.[/bold red]")
+            rprint(f"[bold red]Chain '{chain}' not found in the structure.[/bold red]")
             rprint(f"[bold red]Make sure the chain ID exists in the input file: {input_file}[/bold red]")
             sys.exit(1)
 

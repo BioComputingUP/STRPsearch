@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 from src.usalign import Usalign
-from Bio.PDB import Select
 import warnings
 from Bio import BiopythonWarning
 warnings.filterwarnings("ignore", category=BiopythonWarning)

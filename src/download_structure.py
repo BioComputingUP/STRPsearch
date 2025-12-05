@@ -125,7 +125,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
         model = structure[0]
         available_chains = {ch.name for ch in model}
 
-        # ✅ Extract PDB ID (if available)
+        # Extract PDB ID (if available)
         pdb_id = block.find_value('_entry.id')
         if not pdb_id or pdb_id == '?':
             # fallback: try filename if ID not present

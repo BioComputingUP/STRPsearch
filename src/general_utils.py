@@ -5,15 +5,10 @@ from Bio.PDB import Select
 from Bio import BiopythonWarning
 import seaborn as sns
 import numpy as np
-import json
-import os
-import math
-import warnings
-import gemmi
-import re
+import json, os, math, warnings, gemmi, re
 from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
 from contextlib import redirect_stdout
-import warnings
+
 warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 
