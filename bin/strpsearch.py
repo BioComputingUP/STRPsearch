@@ -151,7 +151,6 @@ def query_file(
                     pdb_id = ds.extract_structure_and_chains_cif(input_file)#get pdb id from pdb file
                     input_name=pdb_id
                     out_dir = os.path.join(out_dir, input_name)
-                    print(out_dir)
                     if os.path.exists(out_dir):
                         rprint("[yellow]Warning: Output directory already exists. Reusing it.[/yellow]\n")
                         for filen in os.listdir(out_dir):
@@ -280,8 +279,7 @@ def download_pdb(
     if chain and chain.lower() != "all":
         chain_file = os.path.join(query_dir, f"{pdb_id}_{ch_id}.cif")
         if not os.path.isfile(chain_file):
-            print(chain_file)
-            rprint(f"[bold red]❌ Chain '{chain}' not found in the {query_dir}.[/bold red]")
+            rprint(f"[bold red]Chain '{chain}' not found in the {query_dir}.[/bold red]")
             rprint(f"[bold red]Make sure the chain ID exists in the input Protein: {pdb_id}[/bold red]")
             sys.exit(1)
 
