@@ -173,7 +173,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
     for ch_id in chain_list:
         try:
             new_structure = gemmi.Structure()
-            new_model = gemmi.Model(model.name if model.name else "1")
+            new_model = gemmi.Model(model.name)
             target_chain = model[ch_id]
             new_model.add_chain(target_chain)
             new_structure.add_model(new_model)
