@@ -3,7 +3,6 @@ from . import general_utils as gu
 from rich import print as rprint
 from Bio import BiopythonWarning
 import os, gzip, shutil, mimetypes, requests, gemmi, warnings
-print(f"Gemmi version: {gemmi.__version__}")
 warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 class ChainSelector(Select):
@@ -174,11 +173,12 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
     for ch_id in chain_list:
         try:
             new_structure = gemmi.Structure()
-            new_model = gemmi.Model(1)
+            new_model = gemmi.Model(model.name if model.name else "1")
             target_chain = model[ch_id]
             new_model.add_chain(target_chain)
             new_structure.add_model(new_model)
-            new_structure.assign_helices_and_sheets()
+            new_structure.setup_entities()
+            new_structure.assign_secondary_structure()
             output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
             new_structure.make_mmcif_document().write_file(output_path)
         except Exception as e:
