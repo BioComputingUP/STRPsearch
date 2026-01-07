@@ -173,12 +173,13 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
     for ch_id in chain_list:
         try:
             new_structure = gemmi.Structure()
-            new_model = gemmi.Model(1)
+            new_model = gemmi.Model('1')
             target_chain = model[ch_id]
             new_model.add_chain(target_chain)
             new_structure.add_model(new_model)
             new_structure.setup_entities()
-            gemmi.assign_helices_and_sheets(new_structure)
+            new_structure.assign_biopolymer_types()
+            new_structure.assign_secondary_structure()
             output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
             new_structure.make_mmcif_document().write_file(output_path)
         except Exception as e:
