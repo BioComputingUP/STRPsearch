@@ -178,10 +178,7 @@ def extract_chains(input_file, chain, out_dir, temp_dir):
             new_model.add_chain(target_chain)
             new_structure.add_model(new_model)
             new_structure.setup_entities()
-            if hasattr(new_structure, 'assign_secondary_structure'):
-                new_structure.assign_secondary_structure()
-            else:
-                new_structure.set_secondary_structure()
+            gemmi.assign_helices_and_sheets(new_structure)
             output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
             new_structure.make_mmcif_document().write_file(output_path)
         except Exception as e:
