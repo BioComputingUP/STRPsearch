@@ -1,4 +1,4 @@
-from Bio.PDB import MMCIFParser, PDBParser, Select
+from Bio.PDB import MMCIFParser, PDBParser, Select, MMCIFIO
 from . import general_utils as gu
 from rich import print as rprint
 from Bio import BiopythonWarning
@@ -78,7 +78,27 @@ def extract_structure_and_chains(pdb_file):
         os.remove(decompressed_file)
 
     return pdb_id, chain_ids
-
+class ChainSelect(Select):
+    def __init__(self, chain_id):
+        self.chain_id = chain_id
+    def accept_chain(self, chain):
+        return chain.get_id() == self.chain_id
+def extract_chains_biopython(input_file, chain_to_extract, out_dir):
+    parser = MMCIFParser(QUIET=True)
+    structure = parser.get_structure("struct", input_file)
+    
+    io = MMCIFIO()
+    io.set_structure(structure)
+    
+    # Define output path
+    output_path = f"{out_dir}/extracted_{chain_to_extract}.cif"
+    
+    # Save only the specific chain
+    io.save(output_path, ChainSelect(chain_to_extract))
+    
+    # NOTE: Biopython's MMCIFIO is excellent at preserving the 
+    # mmCIF format that viewers like MolStar require.
+    return output_path
 def extract_chains(input_file, chain, out_dir, temp_dir):
     """
     Extracts specific chains from a PDB/mmCIF file (including .gz compressed files) 

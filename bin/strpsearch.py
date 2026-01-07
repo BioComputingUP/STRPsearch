@@ -178,6 +178,7 @@ def query_file(
                     for attempt in range(1, max_retries + 1):
                         try:
                             #extract vailable chains
+                            pyath_to_new_cifs=ds.extract_chains_biopython(input_file=input_file,chain_to_extract=chain,out_dir=query_dir)
                             success , pdb_id, test= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
                             break  # Success, exit the retry loop
                         except Exception as e:
