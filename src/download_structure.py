@@ -143,7 +143,7 @@ def extract_chains_biopython(input_file, chain, out_dir, temp_dir):
 
     for ch_id in chain_list:
         try:
-            output_path = os.path.join(out_dir, f"test_{filename}_{ch_id}.cif")
+            output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
             
             # This writes the CIF file. 
             # Note: MMCIFIO automatically handles basic polymer metadata
