@@ -3,6 +3,7 @@ from . import general_utils as gu
 from rich import print as rprint
 from Bio import BiopythonWarning
 import os, gzip, shutil, mimetypes, requests, gemmi, warnings
+print(f"Gemmi version: {gemmi.__version__}")
 warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 class ChainSelector(Select):
