@@ -178,11 +178,8 @@ def query_file(
                     for attempt in range(1, max_retries + 1):
                         try:
                             #extract vailable chains
-                            success_bio, pdb_id_bio, test_bio=ds.extract_chains_biopython(input_file=input_file,chain=chain,out_dir=query_dir, temp_dir=temp_dir)
-                            print(pdb_id_bio)
-                            print(success_bio)
-                            
-                            success , pdb_id, test= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
+                            success, pdb_id, test=ds.extract_chains_biopython(input_file=input_file,chain=chain,out_dir=query_dir, temp_dir=temp_dir)
+                            # success , pdb_id, test= ds.extract_chains(input_file=input_file, chain=chain, out_dir=query_dir, temp_dir=temp_dir)
                             break  # Success, exit the retry loop
                         except Exception as e:
                             rprint(f"[bold yellow]Attempt {attempt} failed to extract chains: {e}[/bold yellow]")
