@@ -118,6 +118,7 @@ def extract_chains_biopython(input_file, chain, out_dir, temp_dir):
         structure = parser.get_structure(filename, input_file)
         # Extract PDB ID from header if possible
         pdb_id = structure.header.get('idcode', filename)
+        structure.id=pdb_id
     except Exception as e:
         print(f"Error reading structure file: {e}")
         return False, None
@@ -137,7 +138,7 @@ def extract_chains_biopython(input_file, chain, out_dir, temp_dir):
             return False, pdb_id
         chain_list = [available_chains_map[chain_lower]]
 
-    # 4. Save each selected chain using MMCIFIO
+    
     io = MMCIFIO()
     io.set_structure(structure)
 
