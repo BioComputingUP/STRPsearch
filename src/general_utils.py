@@ -199,7 +199,7 @@ def segment_cif_directory(input_dir, output_dir):
                             start = region['start']
                             end = region['end']
                             output_cif = os.path.join(
-                                output_dir, f"{os.path.splitext(cif_file)[0]}_{start}_{end}.cif"
+                                output_dir, f"{start}_{end}_{os.path.splitext(cif_file)[0]}.cif"
                             )
                             extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
                         os.remove(cif_path)  # Remove the original .cif file
@@ -523,7 +523,7 @@ def adjust_graph_ends(x, y, frame_step=1):
     return x, y
 
 
-def plot_tmscore_graph(x, y, region_components, out_path):
+def plot_tmscore_graph(x, y, region_components, out_path,json_out_path):
     from matplotlib.lines import Line2D
 
     """
@@ -558,8 +558,24 @@ def plot_tmscore_graph(x, y, region_components, out_path):
     # Save at the specified path in png format
     plt.savefig(out_path, format="png")
     plt.close(fig)
+    clean_units = [
+        [int(start), int(end)] for start, end in region_components["units"]
+    ]
+    clean_insertions = [
+        [int(start), int(end)] for start, end in region_components["insertions"]
+    ]
 
-    plt.close(fig)
+    json_data = {
+        "x": x.tolist() if isinstance(x, np.ndarray) else list(x),
+        "y": y.tolist() if isinstance(y, np.ndarray) else list(y),
+        "regions": {
+            "units": clean_units,
+            "insertions": clean_insertions 
+        }
+    }
+    
+    with open(json_out_path, "w") as f:
+        json.dump(json_data, f, indent=4)
 
 
 
@@ -583,6 +599,21 @@ def smooth_graph(y, target_avg_len, window_p):
 
     return y
 
+
+
+def export_graph_data(x, y, region_components, out_path):
+    """
+    Exports plot data to JSON for the Angular interactive UI
+    """
+    data = {
+        "residues": x.tolist() if hasattr(x, 'tolist') else list(x),
+        "tm_scores": y.tolist() if hasattr(y, 'tolist') else list(y),
+        "units": region_components["units"],       # List of [start, end]
+        "insertions": region_components["insertions"] # List of [start, end]
+    }
+    
+    with open(out_path.replace(".png", ".json"), "w") as f:
+        json.dump(data, f)
 
 def time():
     """

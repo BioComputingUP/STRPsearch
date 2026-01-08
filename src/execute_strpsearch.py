@@ -270,6 +270,7 @@ def execute_predstrp(
 
                         # Define an output name
                         out_name = f"{region_id}_{ct}_{e_val}"
+                        test_out_name=f"{region_id}"
 
                         region_out_path = os.path.join(temp_query_dir, f"{out_name}.cif")
 
@@ -298,13 +299,16 @@ def execute_predstrp(
                             )
 
                         # Create the mapped graph plot
+                        
                         figure_out_path = os.path.join(temp_query_dir, f"{out_name}.png")
-
+                        json_data_out_path=os.path.join(temp_query_dir, f"{test_out_name}.json")
+                        
                         gu.plot_tmscore_graph(
                             x=x,
                             y=y,
                             region_components=components,
-                            out_path=figure_out_path
+                            out_path=figure_out_path,
+                            json_out_path=json_data_out_path
                         )
 
                         # Create the JSON file
@@ -396,6 +400,7 @@ def execute_predstrp(
                     out_region_dir = os.path.join(out_query_dir, f"region_{region_num}")
                     os.makedirs(out_region_dir, exist_ok=True)
                     for filepath in filepaths:
+                
                         extension = os.path.basename(filepath).split(".")[-1]
                         dst_name = "_".join(os.path.basename(filepath).split("_")[:-2]) + "." + extension
                         dst_path = os.path.join(out_region_dir, dst_name)
