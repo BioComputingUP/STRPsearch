@@ -291,17 +291,14 @@ def get_structure(res_range, chain_letter, structure, out_path, io_handler):
     io_handler.save(out_path, ResSelect())
 
 
+
 def get_structure_cif(res_range, chain_id, structure: gemmi.Structure, out_path: str):
-    """
-    Trims and saves a .cif structure using gemmi.
-    res_range: list of integers (residue numbers)
-    """
     model = structure[0]
     original_chain = model[chain_id]
 
-    # Create a new structure with the selected residues
     new_structure = gemmi.Structure()
     new_structure.name = structure.name
+
     new_model = gemmi.Model('1')
     new_chain = gemmi.Chain(chain_id)
 
@@ -312,15 +309,19 @@ def get_structure_cif(res_range, chain_id, structure: gemmi.Structure, out_path:
     new_model.add_chain(new_chain)
     new_structure.add_model(new_model)
 
-    # Convert the new structure into a CIF block
+    new_structure.setup_entities()
+    new_structure.assign_label_seq_id()
+
     cif_block = new_structure.make_mmcif_block()
 
-    # Convert the CIF block to a string
-    cif_string = cif_block.as_string()
+    # Try DSSP if available
+    if hasattr(gemmi, "calculate_dssp"):
+        dssp = gemmi.calculate_dssp(new_structure)
+        dssp.populate_mmcif(cif_block)
 
-    # Write the CIF string to the output file
-    with open(out_path, 'w') as cif_file:
-        cif_file.write(cif_string)
+    with open(out_path, "w") as f:
+        f.write(cif_block.as_string())
+
 
 
 def calculate_ranges(peak_residue_nums, distance, max_length, flexibility):

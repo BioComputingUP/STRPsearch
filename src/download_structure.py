@@ -27,7 +27,6 @@ def extract_structure_and_chains_cif(cif_file):
 
         # Extract PDB ID (if available)
     pdb_id = block.find_value('_entry.id')
-    print(pdb_id)
     if not pdb_id or pdb_id == '?':
         # fallback: try filename if ID not present
         pdb_id = filename
