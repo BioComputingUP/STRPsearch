@@ -558,24 +558,24 @@ def plot_tmscore_graph(x, y, region_components, out_path,json_out_path):
     # Save at the specified path in png format
     plt.savefig(out_path, format="png")
     plt.close(fig)
-    clean_units = [
-        [int(start), int(end)] for start, end in region_components["units"]
-    ]
-    clean_insertions = [
-        [int(start), int(end)] for start, end in region_components["insertions"]
-    ]
+    # clean_units = [
+    #     [int(start), int(end)] for start, end in region_components["units"]
+    # ]
+    # clean_insertions = [
+    #     [int(start), int(end)] for start, end in region_components["insertions"]
+    # ]
 
-    json_data = {
-        "x": x.tolist() if isinstance(x, np.ndarray) else list(x),
-        "y": y.tolist() if isinstance(y, np.ndarray) else list(y),
-        "regions": {
-            "units": clean_units,
-            "insertions": clean_insertions 
-        }
-    }
+    # json_data = {
+    #     "x": x.tolist() if isinstance(x, np.ndarray) else list(x),
+    #     "y": y.tolist() if isinstance(y, np.ndarray) else list(y),
+    #     "regions": {
+    #         "units": clean_units,
+    #         "insertions": clean_insertions 
+    #     }
+    # }
     
-    with open(json_out_path, "w") as f:
-        json.dump(json_data, f, indent=4)
+    # with open(json_out_path, "w") as f:
+    #     json.dump(json_data, f, indent=4)
 
 
 
