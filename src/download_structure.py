@@ -1,4 +1,5 @@
 from Bio.PDB import MMCIFParser, PDBParser, Select, MMCIFIO
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from . import general_utils as gu
 from rich import print as rprint
 from Bio import BiopythonWarning
@@ -116,8 +117,14 @@ def extract_chains_biopython(input_file, chain, out_dir, temp_dir):
             
         structure = parser.get_structure(filename, input_file)
         # Extract PDB ID from header if possible
-        pdb_id = structure.header.get('idcode', filename)
-        structure.id=pdb_id
+        if isinstance(parser, MMCIFParser):
+            cif_dict = MMCIF2Dict(input_file)
+
+            pdb_id = ( cif_dict.get('_entry.id', [None])[0] or cif_dict.get('_struct.entry_id', [None])[0] or filename)
+        else:
+            pdb_id = structure.header.get('idcode', filename)
+
+        structure.id = pdb_id
     except Exception as e:
         print(f"Error reading structure file: {e}")
         return False, None

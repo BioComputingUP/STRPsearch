@@ -127,6 +127,7 @@ def execute_predstrp(
         error_count = 0
         for idx in range(len(target_df)):
             try:
+                
                 row = target_df.iloc[idx]
                 query_name_path= row["query"]
                 parts= query_name_path.split("_")
