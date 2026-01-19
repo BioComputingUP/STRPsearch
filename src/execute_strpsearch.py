@@ -65,13 +65,14 @@ def execute_predstrp(
         None
     """
     start_time = time.time()
-
+    os.makedirs(out_dir, exist_ok=True)
     # Configure logging
     logging.basicConfig(
         filename=os.path.join(out_dir, "debug.log"),
         filemode="w",
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=logging.WARNING
+        level=logging.INFO,
+        force=True
     )
 
     # Validate input files
@@ -157,7 +158,9 @@ def execute_predstrp(
                 rprint(f"[bold][{gu.time()}] Processing hit {idx + 1}/{len(target_df)} ...")
                 rprint(f"[bold blue]Query: {query_name}")
                 rprint(f"[bold blue]Target: {target_name}")
-                rprint(f"[bold blue]Classification: {target_classi}\n")
+                rprint(f"[bold blue]Classification: {target_classi}")
+                rprint(f"[bold blue]Using minimum height for peak detection: {final_min_height_p}\n")
+                logging.info(f"Query: {query_id}, query_chain: {query_chain}, Target: {target_name}, Classification: {target_classi}, E-value: {e_val}, Min Height: {final_min_height_p}")
 
                 # Load query structure and chain
     
@@ -379,7 +382,6 @@ def execute_predstrp(
                     basename = f"{query_name}_{q_start}_{q_end}"
                     for filename in os.listdir(temp_query_dir):
                         if basename in filename:
-                            print(basename, filename)
                             filepath = os.path.join(temp_query_dir, filename)
                             if region_num in src_region_fps_dict.keys():
                                 src_region_fps_dict[region_num].append(filepath)
