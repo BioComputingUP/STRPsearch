@@ -302,7 +302,7 @@ def execute_predstrp(
                         # Create the mapped graph plot
                         
                         figure_out_path = os.path.join(temp_query_dir, f"{out_name}.png")
-                        json_data_out_path=os.path.join(temp_query_dir, f"{test_out_name}.json")
+                        json_data_out_path=os.path.join(temp_query_dir, f"{test_out_name}_profile_yous_here.json")
                         
                         gu.plot_tmscore_graph(
                             x=x,
@@ -379,6 +379,7 @@ def execute_predstrp(
                     basename = f"{query_name}_{q_start}_{q_end}"
                     for filename in os.listdir(temp_query_dir):
                         if basename in filename:
+                            print(basename, filename)
                             filepath = os.path.join(temp_query_dir, filename)
                             if region_num in src_region_fps_dict.keys():
                                 src_region_fps_dict[region_num].append(filepath)
