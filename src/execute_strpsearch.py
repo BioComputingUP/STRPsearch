@@ -104,9 +104,13 @@ def execute_predstrp(
     #apply chainsaw on structures if specified
     if chainsaw:
         rprint(f"[bold][{gu.time()}] Running Chainsaw on structures in {structure_dir} ...\n")
-        gu.segment_cif_directory(structure_dir,structure_dir)
-    
-    
+        fragments_dir=os.path.join(structure_dir, "fragments")
+        os.makedirs(fragments_dir, exist_ok=True)
+
+        gu.segment_cif_directory(structure_dir, fragments_dir)
+        structure_dir=fragments_dir
+        rprint(f"[bold][{gu.time()}] Chainsaw processing completed. Proceeding with fragment structures.\n")
+
     # Specify the path to save Foldseek search output
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 

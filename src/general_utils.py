@@ -202,7 +202,7 @@ def segment_cif_directory(input_dir, output_dir):
                                 output_dir, f"{start}_{end}_{os.path.splitext(cif_file)[0]}.cif"
                             )
                             extract_segment_to_cif(pdb_file, chain_id, start, end, output_cif)
-                        os.remove(cif_path)  # Remove the original .cif file
+                        # os.remove(cif_path)  # Remove the original .cif file
 
                     # Delete the temporary .pdb file
                     os.remove(pdb_file)
