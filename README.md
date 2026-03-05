@@ -177,3 +177,24 @@ If you want to automatically download and query a predicted-model from AlphaFold
 ```
 python3 ./bin/strpsearch.py download-model Q9HXJ7 output/directory --chainsaw
 ```
+
+## Using STRPsearch
+
+You can test out the tool on the official website: https://strpsearch.biocomputingup.it/
+
+Where you will find :
+
+### The home page
+
+You must provide either a PDB ID, a UniProt accession number, or upload a structure file.You can choose to use Chainsaw for domain fragmentation, adjust Foldseek and US-align thresholds, add a job description, and optionally receive a completion alert via email.
+
+![App Screenshot](/images/home_page_submission.png)
+
+After clicking on "submit" it will take you to the results Page
+
+### The Results page
+
+At the top of the Results page, You can find the job details along with the protein structure information. (Fig. 2. A). If no specific protein chain is selected, the prediction is performed on all chains. Results for each chain are displayed separately in expandable/collapsible sections, each composed of three main components.
+All prediction outputs and execution logs are available for download.
+
+![App Screenshot](/images/results_page.png)
