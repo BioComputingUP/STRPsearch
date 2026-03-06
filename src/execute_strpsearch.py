@@ -47,7 +47,8 @@ def execute_predstrp(
         tul_db: str ,
         rul_db: str,
         pdb_id: str,
-        chainsaw: bool
+        chainsaw: bool,
+        protein_length: int = None
 ):
     """
     Executes the PredSTRP pipeline to identify and analyze repeat regions in protein structures.
@@ -60,6 +61,7 @@ def execute_predstrp(
         pymol_pse (bool): Whether to generate PyMOL session files.
         max_eval_p (float): Maximum E-value threshold for filtering hits.
         min_height_p (str): Minimum height for peak detection ("auto" or a float value).
+        protein_length (int): Total number of residues in the input protein structure.
 
     Returns:
         None

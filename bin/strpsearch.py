@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.realpath
 from src import execute_strpsearch as ex
 from src import download_structure as ds
 from src import config as cfg
+from src import general_utils as gu
 
 # Initialize the Typer app
 app = typer.Typer(pretty_exceptions_enable=False, add_completion=False)
@@ -210,9 +211,18 @@ def query_file(
             if f != os.path.basename(chain_file):
                 os.remove(os.path.join(query_dir, f))
 
+    # Calculate protein length
+    protein_length = gu.calculate_protein_length(query_dir)
+    
+    # Extract and save protein information
+    protein_info_file = os.path.join(out_dir, "protein_info.json")
+    protein_info = gu.extract_protein_info(query_dir, protein_info_file)
+    rprint(f"[bold blue]Protein information saved to: {protein_info_file}[/bold blue]")
+    
     # Create a unique subdirectory for this run
     temp_dir = tempfile.mkdtemp(dir=temp_dir)
     rprint(f"[bold green]Using temporary subdirectory: {temp_dir}[/bold green]")
+    rprint(f"[bold blue]Protein length: {protein_length} residues[/bold blue]")
 
     # Execute the prediction
     ex.execute_predstrp(
@@ -226,7 +236,8 @@ def query_file(
         tul_db=tul_db,
         rul_db=rul_db,
         pdb_id=pdb_id,
-        chainsaw=chainsaw)
+        chainsaw=chainsaw,
+        protein_length=protein_length)
 
 @app.command()
 def download_pdb(
@@ -293,6 +304,14 @@ def download_pdb(
             if f != os.path.basename(chain_file):
                 os.remove(os.path.join(query_dir, f))
     
+    # Calculate protein length
+    protein_length = gu.calculate_protein_length(query_dir)
+    
+    # Extract and save protein information
+    protein_info_file = os.path.join(out_dir, "protein_info.json")
+    protein_info = gu.extract_protein_info(query_dir, protein_info_file)
+    rprint(f"[bold blue]Protein information saved to: {protein_info_file}[/bold blue]")
+    
     # Create a unique subdirectory for this run
     temp_dir = tempfile.mkdtemp(dir=temp_dir)
     rprint(f"[bold green]Using temporary subdirectory: {temp_dir}[/bold green]")
@@ -309,7 +328,8 @@ def download_pdb(
         tul_db=tul_db,
         rul_db=rul_db,
         chainsaw=chainsaw,
-        pdb_id=pdb_id
+        pdb_id=pdb_id,
+        protein_length=protein_length
     )
 
 
@@ -363,10 +383,18 @@ def download_model(
     if not success:
         sys.exit()
     
+    # Calculate protein length
+    protein_length = gu.calculate_protein_length(query_dir)
+    
+    # Extract and save protein information
+    protein_info_file = os.path.join(out_dir, "protein_info.json")
+    protein_info = gu.extract_protein_info(query_dir, protein_info_file)
+    rprint(f"[bold blue]Protein information saved to: {protein_info_file}[/bold blue]")
+    
     # Create a unique subdirectory for this run
     temp_dir = tempfile.mkdtemp(dir=temp_dir)
     rprint(f"[bold green]Using temporary subdirectory: {temp_dir}[/bold green]")
-
+    rprint(f"[bold blue]Protein length: {protein_length} residues[/bold blue]")
 
     # Execute the prediction
     ex.execute_predstrp(
@@ -380,7 +408,8 @@ def download_model(
         tul_db=tul_db,
         rul_db=rul_db,
         chainsaw=chainsaw,
-        pdb_id=uniprot_id
+        pdb_id=uniprot_id,
+        protein_length=protein_length
     )
 
 

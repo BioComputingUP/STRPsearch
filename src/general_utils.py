@@ -7,12 +7,37 @@ import seaborn as sns
 import numpy as np
 import json, os, math, warnings, gemmi, re
 from Bio.PDB import PDBParser, MMCIFIO , PDBIO,MMCIFParser
+from Bio import SeqIO
 from contextlib import redirect_stdout
 
 warnings.filterwarnings("ignore", category=BiopythonWarning)
 
 
 from protein_domain_segmentation import ChainsawCluster
+
+# Amino acid molecular weights (in Daltons)
+AA_WEIGHTS = {
+    'A': 89.09,  # Alanine
+    'C': 121.15, # Cysteine
+    'D': 133.10, # Aspartic acid
+    'E': 147.13, # Glutamic acid
+    'F': 165.19, # Phenylalanine
+    'G': 75.07,  # Glycine
+    'H': 155.16, # Histidine
+    'I': 131.17, # Isoleucine
+    'K': 146.19, # Lysine
+    'L': 131.17, # Leucine
+    'M': 149.21, # Methionine
+    'N': 132.12, # Asparagine
+    'P': 115.13, # Proline
+    'Q': 146.15, # Glutamine
+    'R': 174.20, # Arginine
+    'S': 105.09, # Serine
+    'T': 119.12, # Threonine
+    'V': 117.15, # Valine
+    'W': 204.23, # Tryptophan
+    'Y': 181.19  # Tyrosine
+}
 class ResidueRangeSelect(Select):
     def __init__(self, chain_id, start_res, end_res):
         self.chain_id = chain_id
@@ -677,6 +702,167 @@ def check_files(in_dir):
             if " " in filename:
                 have_space_fps.append(file_path)
     return pdb_cif_fps, have_space_fps
+
+
+def calculate_protein_length(structure_dir):
+    """
+    Calculate the total number of residues in all structure files in a directory.
+    
+    Args:
+        structure_dir (str): Directory containing PDB/CIF structure files.
+    
+    Returns:
+        int: Total number of residues across all structures.
+    """
+    total_residues = 0
+    pdb_parser = PDBParser(QUIET=True)
+    cif_parser = MMCIFParser(QUIET=True)
+    
+    # Get all structure files
+    pdb_cif_fps, _ = check_files(structure_dir)
+    
+    for structure_file in pdb_cif_fps:
+        try:
+            if structure_file.endswith(".cif"):
+                structure = cif_parser.get_structure(os.path.basename(structure_file), structure_file)
+            elif structure_file.endswith(".pdb"):
+                structure = pdb_parser.get_structure(os.path.basename(structure_file), structure_file)
+            else:
+                continue
+            
+            # Count residues across all chains
+            for model in structure:
+                for chain in model:
+                    for residue in chain:
+                        total_residues += 1
+        except Exception as e:
+            warnings.warn(f"Could not parse structure file {structure_file}: {e}")
+            continue
+    
+    return total_residues
+
+
+def extract_protein_info(structure_dir, output_file=None):
+    """
+    Extract comprehensive protein information from structure files.
+    
+    Args:
+        structure_dir (str): Directory containing PDB/CIF structure files.
+        output_file (str): Path to save the protein information (JSON format). If None, returns dict.
+    
+    Returns:
+        dict: Protein information including chains, residues, molecular weight, etc.
+    """
+    pdb_parser = PDBParser(QUIET=True)
+    cif_parser = MMCIFParser(QUIET=True)
+    
+    protein_info = {
+        "total_length": 0,
+        "total_molecular_weight": 0.0,
+        "chains": {},
+        "amino_acid_composition": {},
+        "ligands": [],
+        "metal_ions": [],
+        "water_count": 0
+    }
+    
+    # Get all structure files
+    pdb_cif_fps, _ = check_files(structure_dir)
+    
+    # Common metal elements
+    metal_elements = {'ZN', 'FE', 'MG', 'CA', 'CU', 'MN', 'NI', 'CO', 'CD', 'PB'}
+    
+    for structure_file in pdb_cif_fps:
+        try:
+            filename = os.path.basename(structure_file)
+            
+            if structure_file.endswith(".cif"):
+                structure = cif_parser.get_structure(filename, structure_file)
+            elif structure_file.endswith(".pdb"):
+                structure = pdb_parser.get_structure(filename, structure_file)
+            else:
+                continue
+            
+            # Extract information per model and chain
+            for model in structure:
+                for chain in model:
+                    chain_id = chain.id
+                    chain_residues = []
+                    chain_weight = 0.0
+                    
+                    # Process residues
+                    for residue in chain:
+                        res_name = residue.get_resname().strip()
+                        
+                        # Count protein residues (standard amino acids)
+                        if len(res_name) == 3 and res_name[0].isalpha():
+                            aa_code = res_name[0]
+                            chain_residues.append(res_name)
+                            protein_info["total_length"] += 1
+                            
+                            # Accumulate molecular weight
+                            if aa_code in AA_WEIGHTS:
+                                chain_weight += AA_WEIGHTS[aa_code]
+                                # Add amino acid to composition
+                                if aa_code not in protein_info["amino_acid_composition"]:
+                                    protein_info["amino_acid_composition"][aa_code] = 0
+                                protein_info["amino_acid_composition"][aa_code] += 1
+                        
+                        # Collect ligands (non-standard residues)
+                        elif len(res_name) == 3 and res_name not in ['HOH', 'WAT']:
+                            if res_name not in [lig['name'] for lig in protein_info["ligands"]]:
+                                protein_info["ligands"].append({
+                                    "name": res_name,
+                                    "count": 1
+                                })
+                            else:
+                                for lig in protein_info["ligands"]:
+                                    if lig['name'] == res_name:
+                                        lig['count'] += 1
+                        
+                        # Count water molecules
+                        elif res_name in ['HOH', 'WAT']:
+                            protein_info["water_count"] += 1
+                    
+                    # Store chain information
+                    if chain_residues:
+                        protein_info["chains"][chain_id] = {
+                            "length": len(chain_residues),
+                            "molecular_weight": round(chain_weight, 2),
+                            "sequence": ''.join([x[0] for x in chain_residues])
+                        }
+                        protein_info["total_molecular_weight"] += chain_weight
+                
+                # Extract metal ions
+                for residue in model.get_residues():
+                    res_name = residue.get_resname().strip()
+                    if res_name in metal_elements:
+                        metal_found = False
+                        for metal in protein_info["metal_ions"]:
+                            if metal['name'] == res_name:
+                                metal['count'] += 1
+                                metal_found = True
+                                break
+                        if not metal_found:
+                            protein_info["metal_ions"].append({
+                                "name": res_name,
+                                "count": 1
+                            })
+        
+        except Exception as e:
+            warnings.warn(f"Could not parse structure file {structure_file}: {e}")
+            continue
+    
+    # Round molecular weight to 2 decimal places
+    protein_info["total_molecular_weight"] = round(protein_info["total_molecular_weight"], 2)
+    
+    # Save to file if specified
+    if output_file:
+        os.makedirs(os.path.dirname(output_file) if os.path.dirname(output_file) else ".", exist_ok=True)
+        with open(output_file, 'w') as f:
+            json.dump(protein_info, f, indent=2)
+    
+    return protein_info
 
 
 def get_repeat_classi(ontology_df, code):
