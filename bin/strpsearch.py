@@ -216,7 +216,7 @@ def query_file(
     
     # Extract and save protein information
     protein_info_file = os.path.join(out_dir, "protein_info.json")
-    protein_info = gu.extract_protein_info(query_dir, protein_info_file)
+    protein_info = gu.extract_protein_info(query_dir, protein_info_file, protein_id=pdb_id)
     rprint(f"[bold blue]Protein information saved to: {protein_info_file}[/bold blue]")
     
     # Create a unique subdirectory for this run
@@ -309,7 +309,7 @@ def download_pdb(
     
     # Extract and save protein information
     protein_info_file = os.path.join(out_dir, "protein_info.json")
-    protein_info = gu.extract_protein_info(query_dir, protein_info_file)
+    protein_info = gu.extract_protein_info(query_dir, protein_info_file, protein_id=pdb_id)
     rprint(f"[bold blue]Protein information saved to: {protein_info_file}[/bold blue]")
     
     # Create a unique subdirectory for this run
@@ -388,7 +388,7 @@ def download_model(
     
     # Extract and save protein information
     protein_info_file = os.path.join(out_dir, "protein_info.json")
-    protein_info = gu.extract_protein_info(query_dir, protein_info_file)
+    protein_info = gu.extract_protein_info(query_dir, protein_info_file, protein_id=uniprot_id)
     rprint(f"[bold blue]Protein information saved to: {protein_info_file}[/bold blue]")
     
     # Create a unique subdirectory for this run

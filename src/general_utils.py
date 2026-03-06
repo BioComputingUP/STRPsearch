@@ -742,13 +742,14 @@ def calculate_protein_length(structure_dir):
     return total_residues
 
 
-def extract_protein_info(structure_dir, output_file=None):
+def extract_protein_info(structure_dir, output_file=None, protein_id=None):
     """
     Extract comprehensive protein information from structure files.
     
     Args:
         structure_dir (str): Directory containing PDB/CIF structure files.
         output_file (str): Path to save the protein information (JSON format). If None, returns dict.
+        protein_id (str): Protein identifier (PDB ID, UniProt ID, etc.)
     
     Returns:
         dict: Protein information including chains, residues, molecular weight, etc.
@@ -757,6 +758,7 @@ def extract_protein_info(structure_dir, output_file=None):
     cif_parser = MMCIFParser(QUIET=True)
     
     protein_info = {
+        "protein_id": protein_id,
         "total_length": 0,
         "total_molecular_weight": 0.0,
         "chains": {},
