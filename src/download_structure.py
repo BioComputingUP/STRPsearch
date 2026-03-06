@@ -1,4 +1,5 @@
-from Bio.PDB import MMCIFParser, PDBParser, Select
+from Bio.PDB import MMCIFParser, PDBParser, Select, MMCIFIO
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from . import general_utils as gu
 from rich import print as rprint
 from Bio import BiopythonWarning
@@ -27,7 +28,6 @@ def extract_structure_and_chains_cif(cif_file):
 
         # Extract PDB ID (if available)
     pdb_id = block.find_value('_entry.id')
-    print(pdb_id)
     if not pdb_id or pdb_id == '?':
         # fallback: try filename if ID not present
         pdb_id = filename
@@ -78,6 +78,92 @@ def extract_structure_and_chains(pdb_file):
         os.remove(decompressed_file)
 
     return pdb_id, chain_ids
+class ChainSelect(Select):
+    def __init__(self, chain_id):
+        self.chain_id = chain_id
+    def accept_chain(self, chain):
+        return chain.get_id() == self.chain_id
+
+def extract_chains_biopython(input_file, chain, out_dir, temp_dir):
+    pdb_id = None
+    os.makedirs(temp_dir, exist_ok=True)
+    decompressed_file = None
+
+    # 1. Handle .gz compressed files (Your exact logic)
+    if input_file.endswith(".gz"):
+        try:
+            suffix = ".pdb" if input_file.endswith(".ent.gz") else ""
+            decompressed_file = os.path.join(temp_dir, os.path.basename(input_file).split('.gz')[0] + suffix)
+            with gzip.open(input_file, "rb") as gz_file:
+                with open(decompressed_file, "wb") as out_file:
+                    shutil.copyfileobj(gz_file, out_file)
+            input_file = decompressed_file
+        except Exception as e:
+            print(f"Error decompressing file: {e}")
+            return False, None
+
+    filename = os.path.basename(input_file).rsplit('.', 1)[0]
+
+    # 2. Determine file type and Load Structure using Biopython
+    try:
+        mime_type, _ = mimetypes.guess_type(input_file)
+        if mime_type and "pdb" in mime_type or input_file.lower().endswith('.pdb'):
+            parser = PDBParser(QUIET=True)
+        elif mime_type and "cif" in mime_type or input_file.lower().endswith('.cif'):
+            parser = MMCIFParser(QUIET=True)
+        else:
+            print("Only PDB/mmCIF format is accepted.")
+            return False, None
+            
+        structure = parser.get_structure(filename, input_file)
+        # Extract PDB ID from header if possible
+        if isinstance(parser, MMCIFParser):
+            cif_dict = MMCIF2Dict(input_file)
+
+            pdb_id = ( cif_dict.get('_entry.id', [None])[0] or cif_dict.get('_struct.entry_id', [None])[0] or filename)
+        else:
+            pdb_id = structure.header.get('idcode', filename)
+
+        structure.id = pdb_id
+    except Exception as e:
+        print(f"Error reading structure file: {e}")
+        return False, None
+
+    # 3. Handle Chain Selection (Your exact logic)
+    # Biopython structure: structure[model_index][chain_id]
+    model = structure[0] 
+    available_chains = {ch.get_id() for ch in model}
+    available_chains_map = {ch.lower(): ch for ch in available_chains}
+
+    if chain == "all":
+        chain_list = list(available_chains)
+    else:
+        chain_lower = chain.lower()
+        if chain_lower not in available_chains_map:
+            print(f"Chain '{chain}' not found. Available: {', '.join(sorted(available_chains))}")
+            return False, pdb_id
+        chain_list = [available_chains_map[chain_lower]]
+
+    
+    io = MMCIFIO()
+    io.set_structure(structure)
+
+    for ch_id in chain_list:
+        try:
+            output_path = os.path.join(out_dir, f"{filename}_{ch_id}.cif")
+            
+            # This writes the CIF file. 
+            # Note: MMCIFIO automatically handles basic polymer metadata
+            io.save(output_path, ChainSelect(ch_id))
+            
+        except Exception as e:
+            print(f"Warning: Could not save chain {ch_id}: {e}")
+
+    # Cleanup
+    if decompressed_file and os.path.exists(decompressed_file):
+        os.remove(decompressed_file)
+
+    return True, pdb_id, chain_list[-1]
 
 def extract_chains(input_file, chain, out_dir, temp_dir):
     """

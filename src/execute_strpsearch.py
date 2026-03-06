@@ -65,13 +65,14 @@ def execute_predstrp(
         None
     """
     start_time = time.time()
-
+    os.makedirs(out_dir, exist_ok=True)
     # Configure logging
     logging.basicConfig(
         filename=os.path.join(out_dir, "debug.log"),
         filemode="w",
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=logging.WARNING
+        level=logging.INFO,
+        force=True
     )
 
     # Validate input files
@@ -103,9 +104,13 @@ def execute_predstrp(
     #apply chainsaw on structures if specified
     if chainsaw:
         rprint(f"[bold][{gu.time()}] Running Chainsaw on structures in {structure_dir} ...\n")
-        gu.segment_cif_directory(structure_dir,structure_dir)
-    
-    
+        fragments_dir=os.path.join(structure_dir, "fragments")
+        os.makedirs(fragments_dir, exist_ok=True)
+
+        gu.segment_cif_directory(structure_dir, fragments_dir)
+        structure_dir=fragments_dir
+        rprint(f"[bold][{gu.time()}] Chainsaw processing completed. Proceeding with fragment structures.\n")
+
     # Specify the path to save Foldseek search output
     fs_output = os.path.join(temp_dir, "fs_output.tsv")
 
@@ -127,6 +132,7 @@ def execute_predstrp(
         error_count = 0
         for idx in range(len(target_df)):
             try:
+                
                 row = target_df.iloc[idx]
                 query_name_path= row["query"]
                 parts= query_name_path.split("_")
@@ -156,7 +162,9 @@ def execute_predstrp(
                 rprint(f"[bold][{gu.time()}] Processing hit {idx + 1}/{len(target_df)} ...")
                 rprint(f"[bold blue]Query: {query_name}")
                 rprint(f"[bold blue]Target: {target_name}")
-                rprint(f"[bold blue]Classification: {target_classi}\n")
+                rprint(f"[bold blue]Classification: {target_classi}")
+                rprint(f"[bold blue]Using minimum height for peak detection: {final_min_height_p}\n")
+                logging.info(f"Query: {query_id}, query_chain: {query_chain}, Target: {target_name}, Classification: {target_classi}, E-value: {e_val}, Min Height: {final_min_height_p}")
 
                 # Load query structure and chain
     
@@ -270,6 +278,7 @@ def execute_predstrp(
 
                         # Define an output name
                         out_name = f"{region_id}_{ct}_{e_val}"
+                        test_out_name=f"{region_id}"
 
                         region_out_path = os.path.join(temp_query_dir, f"{out_name}.cif")
 
@@ -298,13 +307,16 @@ def execute_predstrp(
                             )
 
                         # Create the mapped graph plot
+                        
                         figure_out_path = os.path.join(temp_query_dir, f"{out_name}.png")
-
+                        json_data_out_path=os.path.join(temp_query_dir, f"{test_out_name}_profile_yous_here.json")
+                        
                         gu.plot_tmscore_graph(
                             x=x,
                             y=y,
                             region_components=components,
-                            out_path=figure_out_path
+                            out_path=figure_out_path,
+                            json_out_path=json_data_out_path
                         )
 
                         # Create the JSON file
@@ -396,6 +408,7 @@ def execute_predstrp(
                     out_region_dir = os.path.join(out_query_dir, f"region_{region_num}")
                     os.makedirs(out_region_dir, exist_ok=True)
                     for filepath in filepaths:
+                
                         extension = os.path.basename(filepath).split(".")[-1]
                         dst_name = "_".join(os.path.basename(filepath).split("_")[:-2]) + "." + extension
                         dst_path = os.path.join(out_region_dir, dst_name)

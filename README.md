@@ -8,6 +8,8 @@ Mozaffari S, Arrías PN, Clementel D, Piovesan D, Ferrari C, Tosatto SCE, Monzon
 
 ## Running STRPsearch
 
+## Running STRPsearch
+
 To get started with the project, first, extract the contents of `data/databases.zip` by running the following command:
 
 ```
