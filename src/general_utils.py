@@ -789,6 +789,7 @@ def extract_protein_info(structure_dir, output_file=None):
                     chain_id = chain.id
                     chain_residues = []
                     chain_weight = 0.0
+                    chain_aa_composition = {}
                     
                     # Process residues
                     for residue in chain:
@@ -803,6 +804,9 @@ def extract_protein_info(structure_dir, output_file=None):
                             # Accumulate molecular weight
                             if aa_code in AA_WEIGHTS:
                                 chain_weight += AA_WEIGHTS[aa_code]
+                                if aa_code not in chain_aa_composition:
+                                    chain_aa_composition[aa_code] = 0
+                                chain_aa_composition[aa_code] += 1
                                 # Add amino acid to composition
                                 if aa_code not in protein_info["amino_acid_composition"]:
                                     protein_info["amino_acid_composition"][aa_code] = 0
@@ -829,7 +833,8 @@ def extract_protein_info(structure_dir, output_file=None):
                         protein_info["chains"][chain_id] = {
                             "length": len(chain_residues),
                             "molecular_weight": round(chain_weight, 2),
-                            "sequence": ''.join([x[0] for x in chain_residues])
+                            "sequence": ''.join([x[0] for x in chain_residues]),
+                            "amino_acid_composition": chain_aa_composition
                         }
                         protein_info["total_molecular_weight"] += chain_weight
                 
